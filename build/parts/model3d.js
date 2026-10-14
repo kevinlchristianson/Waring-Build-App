@@ -101,16 +101,18 @@ const roomAt = (x, y) => { const r = rooms.filter(r => x > r.rect[0] - 0.05 && x
 // ---------------------------------------------------------------- ground, slabs and the plan drawing on the slab
 function buildFloor() {
   const g = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), MAT.grass); g.rotation.x = -Math.PI / 2; g.position.y = -0.36; g.receiveShadow = true; G.floor.add(g);
-  box(0, W, 0, D, -0.34, 0, MAT.slab, { kind: 'slab', text: 'Slab on grade: 4" concrete on 10-mil vapour retarder, R-10 perimeter insulation, thickened edges; the garage slab steps down 4" and slopes 1/8"/ft to the door' }, G.floor);
+  const fp = new THREE.Shape(SET.footprint.map(([x, y]) => new THREE.Vector2(x - W / 2, y - D / 2)));
+  const sg = new THREE.ExtrudeGeometry(fp, { depth: 0.34, bevelEnabled: false }); sg.rotateX(-Math.PI / 2);
+  const slab = new THREE.Mesh(sg, MAT.slab); slab.position.y = -0.34; slab.receiveShadow = true; slab.userData = { kind: 'slab', text: 'Slab on grade: 4" concrete on 10-mil vapour retarder, R-10 perimeter insulation, thickened edges; the garage slab steps down 4" and slopes 1/8"/ft to the door' }; pickables.push(slab); G.floor.add(slab);
   for (const [name, x1, x2, y1, y2, note] of SET.outdoor) box(x1, x2, y1, y2, -0.34, -0.06, MAT.conc, { kind: 'slab', text: `${name}: ${note}` }, G.floor);
   box(58.4, 61.6, 19.4, 22.6, -0.34, 0.1, MAT.conc, { kind: 'slab', text: 'AC-1 pad: concrete or composite, level, 3" above grade' }, G.floor);
   const b64 = document.getElementById('base-svg').textContent.trim();
   const img = new Image();
-  const plateMat = new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
+  const plateMat = new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.DoubleSide, transparent: true, alphaTest: 0.05, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
   img.onload = () => {
     const s = SET.base.s, K = Math.max(1, Math.min(3, Math.floor(renderer.capabilities.maxTextureSize / (W * s))));
     const cv = document.createElement('canvas'); cv.width = Math.round(W * s * K); cv.height = Math.round(D * s * K);
-    const ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height); ctx.drawImage(img, 0, 0, cv.width, cv.height);
+    const ctx = cv.getContext('2d'); ctx.drawImage(img, 0, 0, cv.width, cv.height);
     const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
     plateMat.map = tex; plateMat.needsUpdate = true;
   };
@@ -126,7 +128,7 @@ function wallBoxes(w, ghost) {
   const k1 = w.alongX ? ry1 : rx1, k2 = w.alongX ? ry2 : rx2;
   const lo = w.alongX ? rx1 : ry1, hi = w.alongX ? rx2 : ry2;
   // exterior walls carry the siding and sheathing outside the framing: 1" more on the outside face
-  const out = ext ? 1 / 12 : 0, so = { 1: [-1, 0], 3: [0, 1], 4: [-1, 0], 2: [0, 1] }[w.n] || [0, 0];
+  const out = ext ? 1 / 12 : 0, so = w.out < 0 ? [-1, 0] : w.out > 0 ? [0, 1] : [0, 0];
   const a1 = k1 + so[0] * out, a2 = k2 + so[1] * out;
   const place = (u1, u2, b, t, m, d = data) => w.alongX ? box(u1, u2, a1, a2, b, t, m, d, ext ? G.shell : G.walls) : box(a1, a2, u1, u2, b, t, m, d, ext ? G.shell : G.walls);
   const ops = w.ops.slice().sort((p, q) => p.lo - q.lo);
@@ -167,7 +169,7 @@ function frameWall(w) {
   for (let p = lo + STUD / 2; p < hi - STUD / 2; p += OC) if (!blocked(p)) place(p - STUD / 2, p + STUD / 2, PL, TOP - 2 * PL);
   place(hi - STUD, hi, PL, TOP - 2 * PL);
   for (const o of ops) {
-    const a = o.lo, b = o.hi, hd = w.type === 'E' && (w.n === 1 || w.n === 3) ? (b - a > 10 ? 14 / 12 : b - a > 3.6 ? 11.25 / 12 : 7.25 / 12) : w.type === 'E' ? 5.5 / 12 : 3.5 / 12;
+    const a = o.lo, b = o.hi, hd = w.type === 'E' && w.alongX ? (b - a > 10 ? 14 / 12 : b - a > 3.6 ? 11.25 / 12 : 7.25 / 12) : w.type === 'E' ? 5.5 / 12 : 3.5 / 12;
     place(a - 2 * STUD, a - STUD, PL, TOP - 2 * PL); place(b + STUD, b + 2 * STUD, PL, TOP - 2 * PL);      // kings
     place(a - STUD, a, PL, o.ro); place(b, b + STUD, PL, o.ro);                                            // jacks
     place(a - STUD, b + STUD, o.ro, o.ro + hd, b - a > 10 ? MAT.lvl : MAT.header);                         // header
@@ -386,7 +388,8 @@ function buildFurniture() {
   if (pn) box(pn.x, pn.x + 0.35, pn.y - 1.2, pn.y + 1.2, 3.5, 6.5, MAT.panel, { kind: 'elec', text: pn.text }, G.elec);
   const h = hvac.hp; box(h.x1, h.x2, h.y1, h.y2, 0.6, 3.6, MAT.unit, { kind: 'hvac', text: h.note }, G.hvac);
   // porch and patio posts
-  for (const [x, y] of [[12.4, -5.6], [18.3, -5.6], [24.1, -5.6], [29.6, -5.6], [12.9, 49.6], [19.5, 49.6], [26.1, 49.6]]) box(x - 0.25, x + 0.25, y - 0.25, y + 0.25, 0, 8.6, MAT.post, { kind: 'roof', text: '6x6 cedar post on a post base and footing, as the elevations' }, G.roof);
+  for (const [x, y, which] of SET.posts) box(x - 0.25, x + 0.25, y - 0.25, y + 0.25, 0, which === 'porch' ? PLATE - 0.95 : 8.6, MAT.post, { kind: 'roof', text: `6x6 cedar post on a post base and footing, as the elevations: ${which === 'porch' ? 'front porch, under the porch gable beam' : 'rear patio shed'}` }, G.roof);
+  { const ps = SET.posts.filter(p => p[2] === 'porch'), y = ps[0][1]; box(ps[0][0] - 0.6, ps[ps.length - 1][0] + 0.6, y - 0.25, y + 0.25, PLATE - 0.95, PLATE, MAT.post, { kind: 'roof', text: 'Porch beam: 2-2x10 (or 6x10 cedar wrap) on the posts, carries the porch gable trusses' }, G.roof); }
 }
 
 // ---------------------------------------------------------------- electrical devices
@@ -425,7 +428,7 @@ const DRAIN_H = -1.0, COLD_H = -0.55, HOT_H = -0.7, ATTIC_H = PLATE + 0.6;
 const rOf = s => ({ '4"': 0.2, '3"': 0.15, '2"': 0.1, '1-1/2"': 0.08, '1-1/4"': 0.07 })[s] || 0.075;
 // underside of the roof sheathing over the wall line: truss bottom chord, heel and top chord depth
 const RB = PLATE + 3.5 / 12 + 0.6 + 5.5 / 12 * (0.5 + 0.5 * Math.hypot(1, SET.pitch));
-const roofAt = y => RB + SET.pitch * (D / 2 - Math.abs(y - D / 2));
+const roofAt = (y, x = W / 2) => RB + SET.pitch * Math.max(0, roofRun(x, y));
 function buildPlumbing() {
   const pl = plumbing;
   for (const dr of pl.drains) polyline(dr.pts, DRAIN_H, rOf(dr.size), MAT.drain, { kind: 'plumb', text: `Drain ${dr.id}: ${dr.size} under the slab — ${dr.note}` }, G.plumb);
@@ -439,7 +442,7 @@ function buildPlumbing() {
     tube({ x: x0, y: y0, h: DRAIN_H }, { x: x0, y: y0, h: ATTIC_H }, rOf(v.size) * 0.9, MAT.vent, d, G.plumb);
     polyline(v.attic, ATTIC_H, rOf(v.size) * 0.9, MAT.vent, d, G.plumb);
   }
-  tube({ x: pl.vtr.x, y: pl.vtr.y, h: ATTIC_H }, { x: pl.vtr.x, y: pl.vtr.y, h: roofAt(pl.vtr.y) + 1.0 }, 0.15, MAT.vent, { kind: 'plumb', text: `VTR: ${pl.vtr.note}` }, G.plumb);
+  tube({ x: pl.vtr.x, y: pl.vtr.y, h: ATTIC_H }, { x: pl.vtr.x, y: pl.vtr.y, h: roofAt(pl.vtr.y, pl.vtr.x) + 1.0 }, 0.15, MAT.vent, { kind: 'plumb', text: `VTR: ${pl.vtr.note}` }, G.plumb);
   box(pl.aav.x - 0.12, pl.aav.x + 0.12, pl.aav.y - 0.12, pl.aav.y + 0.12, 1.6, 2.1, MAT.vent, { kind: 'plumb', text: `AAV: ${pl.aav.note}` }, G.plumb);
   for (const t of pl.trunks) {
     polyline(t.pts.map(([x, y]) => [x - 0.15, y - 0.15]), COLD_H, 0.07, MAT.cold, { kind: 'plumb', text: `Supply bundle ${t.id}: PEX home runs, cold — ${t.note}` }, G.plumb);
@@ -487,7 +490,7 @@ function buildHVAC() {
     const z0 = e.id === 'EF4' ? 3.0 : e.id === 'EF3' ? 6.2 : CEIL;
     tube({ x: x0, y: y0, h: z0 }, { x: x0, y: y0, h: TH }, r, MAT.duct, d, G.hvac);
     polyline(e.pts, TH, r, MAT.duct, d, G.hvac);
-    tube({ x: x1, y: y1, h: TH }, { x: x1, y: y1, h: roofAt(y1) + 0.5 }, r, MAT.duct, d, G.hvac);
+    tube({ x: x1, y: y1, h: TH }, { x: x1, y: y1, h: roofAt(y1, x1) + 0.5 }, r, MAT.duct, d, G.hvac);
   }
   const ls = hv.lineset; tube({ x: ls[0][0], y: ls[0][1], h: 2.0 }, { x: ls[1][0], y: ls[1][1], h: 2.0 }, 0.08, MAT.lineset, { kind: 'hvac', text: 'Refrigerant line set AC-1 to FAU-1' }, G.hvac);
   tube({ x: ls[2][0], y: ls[2][1], h: 2.0 }, { x: ls[2][0], y: ls[2][1], h: TH }, 0.08, MAT.lineset, { kind: 'hvac', text: 'Refrigerant line set AC-1 to FAU-1, up through the mech room ceiling' }, G.hvac);
@@ -507,52 +510,112 @@ function buildHVAC() {
     const [fx0, fy0] = fl.pts[0], [fx1, fy1] = fl.pts[fl.pts.length - 1], fd = { kind: 'hvac', text: `${fl.id} ${fl.name}: ${fl.note}` }, h0 = fl.id === 'V1' ? PLATE + 1.6 : 5.6, hr = PLATE + 2.6 + 0.02 * Math.abs(fy1 - fy0);
     tube({ x: fx0, y: fy0, h: h0 }, { x: fx0, y: fy0, h: PLATE + 2.6 }, 0.12, MAT.flue, fd, G.hvac);
     if (fx1 !== fx0 || fy1 !== fy0) tube({ x: fx0, y: fy0, h: PLATE + 2.6 }, { x: fx1, y: fy1, h: hr }, 0.12, MAT.flue, fd, G.hvac);
-    tube({ x: fx1, y: fy1, h: hr }, { x: fx1, y: fy1, h: roofAt(fy1) + 1.6 }, 0.12, MAT.flue, fd, G.hvac);
+    tube({ x: fx1, y: fy1, h: hr }, { x: fx1, y: fy1, h: roofAt(fy1, fx1) + 1.6 }, 0.12, MAT.flue, fd, G.hvac);
   }
 }
 
-// ---------------------------------------------------------------- roof: 6:12 common trusses at 24" o.c. spanning north–south, ridge east–west
+// ---------------------------------------------------------------- roof: 6:12 gable, ridge east–west, with a front gable over the porch and one over the garage
 const TR = { heel: 0.6, top: 5.5 / 12, bot: 3.5 / 12, web: 3.5 / 12, w: 1.5 / 12 };
+const OV = SET.overhang, PIT = SET.pitch, GAB = SET.roof.gables, RIDGE = D / 2;
+// "run": horizontal distance up the slope from the wall line; the roof is RB + pitch × run, the highest of the main roof and the front gables
+const mainRun = (x, y) => Math.min(y, D - y);
+const inMain = (x, y) => x >= -OV - 1e-6 && x <= W + OV + 1e-6 && y >= -OV - 1e-6 && y <= D + OV + 1e-6;
+const gabRun = (g, x) => Math.min(x - g.a, g.b - x);
+const inGab = (g, x, y) => x >= g.a - OV - 1e-6 && x <= g.b + OV + 1e-6 && y >= g.front - OV - 1e-6 && y <= (g.b - g.a) / 2 + 1e-6;
+function roofRun(x, y) { let r = inMain(x, y) ? mainRun(x, y) : -Infinity; for (const g of GAB) if (inGab(g, x, y)) r = Math.max(r, gabRun(g, x)); return r; }
+
+// sticks: [[x, y, h], [x, y, h], width, depth, plan normal of the member's plane [nx, ny]] merged into one geometry
+function sticks(list) {
+  const pos = [], nor = [];
+  for (const [a, b, wd, dp, n] of list) {
+    const A = M(a[0], a[1]), B = M(b[0], b[1]), va = new THREE.Vector3(A.x, a[2], A.z), vb = new THREE.Vector3(B.x, b[2], B.z);
+    const dir = vb.clone().sub(va), len = dir.length(); if (len < 0.05) continue; dir.normalize();
+    let xa = new THREE.Vector3(n[0], 0, -n[1]).normalize();
+    const za = new THREE.Vector3().crossVectors(xa, dir).normalize(); xa = new THREE.Vector3().crossVectors(dir, za).normalize();
+    const g = new THREE.BoxGeometry(wd, len, dp), mt = new THREE.Matrix4().makeBasis(xa, dir, za); mt.setPosition(va.clone().add(vb).multiplyScalar(0.5));
+    g.applyMatrix4(mt); const ng = g.toNonIndexed(); pos.push(...ng.attributes.position.array); nor.push(...ng.attributes.normal.array); g.dispose(); ng.dispose();
+  }
+  const out = new THREE.BufferGeometry();
+  out.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); out.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+  return out;
+}
+function addTruss(list, text) {
+  const m = new THREE.Mesh(sticks(list), MAT.woodExt); m.castShadow = true; m.receiveShadow = true; m.userData = { kind: 'roof', text }; pickables.push(m); G.truss.add(m);
+}
+// one truss in a vertical plane. P(s, h) gives the plan point at station s; top(s) the underside of the top chord; s0..s1 the bearing span
+function truss(P, n, top, s0, s1, e0, e1, bottomAt, breaks, text) {
+  const L = [], seg = (sa, ha, sb, hb, d, wd = TR.w) => L.push([P(sa, ha), P(sb, hb), wd, d, n]);
+  const st = [e0, ...breaks.filter(b => b > e0 && b < e1), e1];
+  for (let k = 1; k < st.length; k++) seg(st[k - 1], top(st[k - 1]) + TR.top / 2, st[k], top(st[k]) + TR.top / 2, TR.top);   // top chord
+  seg(s0, bottomAt - TR.bot / 2, s1, bottomAt - TR.bot / 2, TR.bot);                                                           // bottom chord
+  for (const s of [s0, s1]) seg(s, bottomAt, s, top(s), TR.web);                                                               // heels
+  const np = 8;
+  for (let k = 1; k <= np; k++) {
+    const a = s0 + (k - 1) * (s1 - s0) / np, b = s0 + k * (s1 - s0) / np, ha = (k - 1) % 2 ? top(a) : bottomAt, hb = k % 2 ? top(b) : bottomAt;
+    if (Math.min(top(a), top(b)) - bottomAt > 0.3) seg(a, ha, b, hb, TR.web);
+  }
+  const mid = (s0 + s1) / 2; if (top(mid) - bottomAt > 0.3) seg(mid, bottomAt, mid, top(mid), TR.web);
+  addTruss(L, text);
+}
 function buildRoofTrusses() {
-  const n = Math.round(W / 2), half = D / 2, y0 = PLATE + TR.bot, rise = SET.pitch * half, yr = y0 + TR.heel + rise;
-  const topAt = s => y0 + TR.heel + SET.pitch * (half - Math.abs(s));    // s: north–south offset from the ridge
-  for (let i = 0; i <= n; i++) {
-    const px = i === 0 ? 0.0625 : i === n ? W - 0.0625 : i * 2, x = M(px, 0).x, parts = [];
-    // a member from (s1, h1) to (s2, h2) in the truss plane (s north–south from the ridge, model z = -s)
-    const member = (s1, h1, s2, h2, d) => { const ds = s2 - s1, dh = h2 - h1; parts.push([TR.w, Math.hypot(ds, dh), d, x, (h1 + h2) / 2, -(s1 + s2) / 2, Math.atan2(-ds, dh)]); };
-    member(-half, y0 - TR.bot / 2, half, y0 - TR.bot / 2, TR.bot);
-    for (const s of [-1, 1]) {
-      const es = s * (half + SET.overhang), eh = topAt(half) - SET.pitch * SET.overhang;
-      member(es, eh + TR.top / 2, 0, yr + TR.top / 2, TR.top);
-      member(s * half, y0, s * half, topAt(half), TR.web);
-      for (let k = 1; k <= 4; k++) { const sa = s * (half - (k - 1) * half / 4), sb = s * (half - k * half / 4), ha = (k - 1) % 2 ? topAt(sa) : y0, hb = k % 2 ? topAt(sb) : y0; member(sa, ha, sb, hb, TR.web); }
+  const y0 = PLATE + TR.bot, T0 = y0 + TR.heel;
+  // main trusses north–south at 24" o.c.; the end trusses are sheathed gable ends
+  for (let px = 0; px <= W + 1e-6; px += 2) {
+    const x = px === 0 ? 0.0625 : px >= W ? W - 0.0625 : px, top = s => T0 + PIT * Math.min(s, D - s), end = px === 0 || px >= W;
+    truss((s, h) => [x, s, h], [1, 0], top, 0, D, -OV, D + OV, y0, [RIDGE],
+      `Roof truss ${px / 2 + 1} of ${W / 2 + 1}${end ? ` (${px ? 'east' : 'west'} gable end, sheathed, verticals at 16")` : ''}: 6:12 common, ${ftIn(px)} from the west wall, 40'-0" clear span from the front wall to the rear wall, 12" overhang; interior walls stay non-bearing`);
+  }
+  // the front gables: framed trusses where they stand clear of the main roof, valley trusses where they sit on it
+  const lift = RB - T0 + 0.29;
+  for (const g of GAB) {
+    const mid = (g.a + g.b) / 2, top = x => T0 + PIT * Math.min(x - g.a, g.b - x);
+    for (let y = g.front; y < (g.b - g.a) / 2 - 1e-6; y += 2) {
+      if (y <= 1e-6) {
+        truss((s, h) => [s, y, h], [0, 1], top, g.a, g.b, g.a - OV, g.b + OV, y0, [mid], `${g.name}: ${y === g.front ? 'gable end truss, sheathed and sided' : 'common truss'}, 6:12, ${ftIn(g.b - g.a)} span${g.id === 'CG1' ? ', bearing on the porch beam and the trusses behind' : ''}`);
+      } else {
+        const d = y + lift / PIT, xl = g.a + d, xr = g.b - d, base = RB + PIT * y + 0.04;
+        if (xr - xl < 1) continue;
+        truss((s, h) => [s, y, h], [0, 1], top, xl, xr, xl, xr, base, [mid], `${g.name}: valley truss on the main roof sheathing, ${ftIn(xr - xl)} wide; valley sets at 24" o.c. up to where the gable ridge meets the main roof`);
+      }
     }
-    member(0, y0, 0, yr, TR.web);
-    const m = new THREE.Mesh(mergeBoxes(parts), MAT.woodExt);
-    m.castShadow = true; m.receiveShadow = true;
-    m.userData = { kind: 'roof', text: `Roof truss ${i + 1} of ${n + 1}${i === 0 || i === n ? ' (gable end)' : ''}: 6:12 common truss, ${ftIn(px)} from the west wall, 40'-0" clear span from wall 1 to wall 3, 12" overhang; interior walls stay non-bearing` };
-    pickables.push(m); G.truss.add(m);
   }
 }
 function buildRoof() {
-  // two roof planes, the gable triangles above walls 2 and 4, and shed covers over the porch and patio
-  const half = D / 2 + SET.overhang, run = Math.hypot(half, half * SET.pitch), eave = RB - SET.pitch * SET.overhang, ridge = RB + SET.pitch * D / 2;
-  const data = { kind: 'roof', text: 'Roof: architectural asphalt shingles on 7/16" OSB, synthetic underlayment, ice barrier 24" inside the wall line, ridge vent; 6:12 simple gable, 12" overhangs' };
-  for (const s of [-1, 1]) {
-    const g = new THREE.BoxGeometry(W + 2 * SET.overhang, 0.08, run);
-    const m = new THREE.Mesh(g, MAT.roof); m.rotation.x = s * Math.atan(SET.pitch); m.position.set(0, (eave + ridge) / 2 + 0.05, s * (half / 2)); m.castShadow = true; m.receiveShadow = true; m.userData = data; pickables.push(m); G.roof.add(m);
+  // one surface for the whole roof: the main gable and the two front gables, with valleys where the planes meet.
+  // Every valley here runs at 45° in plan, so a 6" grid, split on the right diagonal, follows them exactly.
+  const step = 0.5, x0 = -OV, x1 = W + OV, y0 = Math.min(-OV, ...GAB.map(g => g.front - OV)), y1 = D + OV;
+  const H = (x, y) => RB + 0.04 + PIT * roofRun(x, y), pos = [];
+  const v = (x, y) => { const m = M(x, y); pos.push(m.x, H(x, y), m.z); };
+  for (let x = x0; x < x1 - 1e-6; x += step) for (let y = y0; y < y1 - 1e-6; y += step) {
+    const cx = x + step / 2, cy = y + step / 2; if (roofRun(cx, cy) === -Infinity) continue;
+    const xb = x + step, yb = y + step, hc = H(cx, cy);
+    if (Math.abs((H(x, y) + H(xb, yb)) / 2 - hc) <= Math.abs((H(xb, y) + H(x, yb)) / 2 - hc)) { v(x, y); v(xb, y); v(xb, yb); v(x, y); v(xb, yb); v(x, yb); }
+    else { v(x, y); v(xb, y); v(x, yb); v(xb, y); v(xb, yb); v(x, yb); }
   }
-  const k = RB - PLATE, shape = new THREE.Shape(); shape.moveTo(-D / 2, 0); shape.lineTo(D / 2, 0); shape.lineTo(D / 2, k); shape.lineTo(0, k + SET.pitch * D / 2); shape.lineTo(-D / 2, k); shape.closePath();
-  for (const px of [0, W]) {
-    const g = new THREE.ExtrudeGeometry(shape, { depth: TEXT, bevelEnabled: false }); g.rotateY(Math.PI / 2);
-    const m = new THREE.Mesh(g, MAT.siding); m.position.set(px - W / 2 - (px ? TEXT : 0), PLATE, 0); m.userData = { kind: 'roof', text: `Gable end over the ${px ? 'east' : 'west'} wall: sheathed truss, siding to match` }; pickables.push(m); G.roof.add(m);
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.computeVertexNormals();
+  const rm = MAT.roof.clone(); rm.side = THREE.DoubleSide;
+  const roof = new THREE.Mesh(g, rm); roof.castShadow = true; roof.receiveShadow = true;
+  roof.userData = { kind: 'roof', text: 'Roof: 6:12 gable, ridge east–west, with two front gables (porch and garage), architectural asphalt shingles on 7/16" OSB, synthetic underlayment, ice barrier 24" inside the wall line and in the valleys, ridge vent; 12" overhangs' };
+  pickables.push(roof); G.roof.add(roof);
+  // main gable ends over walls 4 and 2
+  { const k = RB - PLATE, sh = new THREE.Shape(); sh.moveTo(-D / 2, 0); sh.lineTo(D / 2, 0); sh.lineTo(D / 2, k); sh.lineTo(0, k + PIT * D / 2); sh.lineTo(-D / 2, k); sh.closePath();
+    for (const px of [0, W]) {
+      const g = new THREE.ExtrudeGeometry(sh, { depth: TEXT, bevelEnabled: false }); g.rotateY(Math.PI / 2);
+      const m = new THREE.Mesh(g, MAT.siding); m.position.set(px - W / 2 - (px ? TEXT : 0), PLATE, 0); m.userData = { kind: 'roof', text: `Gable end over the ${px ? 'east' : 'west'} wall: sheathed gable truss, siding to match` }; pickables.push(m); G.roof.add(m);
+    } }
+  // front gable faces: sided triangles over the porch beam and over the garage door wall
+  for (const gb of GAB) {
+    const sh = new THREE.Shape(), xa = gb.a - W / 2, xb = gb.b - W / 2, k = RB - PLATE;
+    sh.moveTo(xa, 0); sh.lineTo(xb, 0); sh.lineTo(xb, k); sh.lineTo((xa + xb) / 2, k + PIT * (gb.b - gb.a) / 2); sh.lineTo(xa, k); sh.closePath();
+    const m = new THREE.Mesh(new THREE.ShapeGeometry(sh), MAT.siding.clone()); m.material.side = THREE.DoubleSide;
+    m.position.set(0, PLATE, M(0, gb.front).z + 0.1); m.userData = { kind: 'roof', text: `${gb.name}: sheathed gable end truss, board-and-batten siding as the front elevation` }; pickables.push(m); G.roof.add(m);
   }
   const shed = (x1, x2, ya, yb, ha, hb, text) => {
     const L = Math.hypot(yb - ya, hb - ha), g = new THREE.BoxGeometry(x2 - x1, 0.08, L), m = new THREE.Mesh(g, MAT.roof);
     const a = M((x1 + x2) / 2, (ya + yb) / 2); m.position.set(a.x, (ha + hb) / 2, a.z); m.rotation.x = Math.atan2(hb - ha, yb - ya); m.castShadow = true; m.userData = { kind: 'roof', text }; pickables.push(m); G.roof.add(m);
   };
-  shed(11.5, 30.5, 0, -6.5, eave + 0.4, 8.7, 'Front porch roof: shed on 2x6 rafters from a ledger under the main eave, 2-2x10 beam on 6x6 posts');
-  shed(12.0, 27.0, 40, 50.5, eave + 0.4, 8.7, 'Rear patio cover: shed on 2x6 rafters, 2-2x10 beam on 6x6 posts');
+  const pat = SET.outdoor.find(o => o[0] === 'Rear Patio');
+  shed(pat[1] - 0.3, pat[2] + 0.3, D + 0.4, pat[4] + 0.5, RB - PIT * 0.4, 8.7, 'Rear patio cover beyond the main eave: shed on 2x6 rafters from a ledger under the eave, 2-2x10 beam on 6x6 posts; the first 4\' of the patio is under the house roof');
 }
 
 // ---------------------------------------------------------------- build everything

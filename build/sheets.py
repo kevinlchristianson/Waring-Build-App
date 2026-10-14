@@ -82,11 +82,15 @@ WALL_TYPE = {
 def wall_len(w):
     """plate length: centre-line length, less half of each wall it butts into"""
     n, x1, y1, x2, y2, typ, _ = w
-    if n in (1, 3):
-        return P.W
-    if n in (2, 4):
-        return P.D - 2 * P.T_EXT
     L = abs(x2 - x1) + abs(y2 - y1)
+    if typ == 'E':
+        # east-west exterior walls run through the corners; north-south ones butt between them
+        if P.along_x(w):
+            return L
+        for ex, ey in ((x1, y1), (x2, y2)):
+            if any(v[5] == 'E' and P.along_x(v) and wall_rect(v)[0] - 0.01 <= ex <= wall_rect(v)[1] + 0.01 and wall_rect(v)[2] - 0.01 <= ey <= wall_rect(v)[3] + 0.01 for v in P.WALLS):
+                L -= P.T_EXT
+        return L
     for ex, ey in ((x1, y1), (x2, y2)):
         for v in P.WALLS:
             if v[0] == n or P.along_x(v) == P.along_x(w):
@@ -112,8 +116,8 @@ def wall_runs(w):
             if vx1 - 0.01 <= ex <= vx2 + 0.01 and vy1 - 0.01 <= ey <= vy2 + 0.01:
                 hit_ = v[0]
         ends.append(wname(hit_) if hit_ else 'free end')
-    if n <= 4:
-        return {1: 'east–west, the front of the house', 2: 'north–south, the east gable end', 3: 'east–west, the rear of the house', 4: 'north–south, the west gable end'}[n]
+    if typ == 'E':
+        return P.EXT_RUNS[n]
     mid = ((x1 + x2) / 2, (y1 + y2) / 2)
     if ax:
         f = y1 - t / 2
@@ -134,28 +138,28 @@ def door_ro(d):
         return f'{win + 2}" x {hin + 2.5:g}"'
     if kind == 'bifold':
         return f'{win + 2}" x {hin + 2.5:g}"'
-    if n <= 4:
+    if P.wall(n)[5] == 'E':
         return f'{win + 2.5:g}" x {hin + 1.5:g}"'
     return f'{win + 2}" x {hin + 2.5:g}"'
 
 
 def header_for(n, w):
-    if n in (1, 3):
+    if P.wall(n)[5] == 'E' and P.along_x(P.wall(n)):
         if w > 10:
             return '3-1/2" x 14" LVL (2 plies 1-3/4"), 3 jacks each end; confirm with the truss reactions'
         if w > 3.6:
             return '2-2x12 with 2" XPS, 2 jacks each end'
         return '2-2x8 with 2" XPS, 1 jack each end'
-    if n in (2, 4):
-        return '2-2x6 with 2" XPS (gable end, non-bearing)'
+    if P.wall(n)[5] == 'E':
+        return '2-2x6 with 2" XPS (non-bearing: gable end or porch / patio return)'
     return 'flat 2x4 with cripples (non-bearing)'
 
 
 BLOCKING = [
-    ('B1', 5, 'E', 5.0, 9.0, '30"–72"', 'TV mount, living room: 2x8 flat between studs, 2 rows'),
+    ('B1', 5, 'E', 9.0, 13.0, '30"–72"', 'TV mount, living room: 2x8 flat between studs, 2 rows'),
     ('B2', 15, 'E', 31.0, 35.0, '30"–66"', 'TV mount, primary bedroom'),
     ('B3', 15, 'W', 27.8, 35.0, '54"–96"', 'kitchen upper cabinets, wall run: 2x6 continuous band'),
-    ('B4', 3, 'S', 23.0, 27.854, '54"–96"', 'kitchen upper cabinets, rear run, either side of N8'),
+    ('B4', 3, 'S', 23.229, 27.854, '54"–96"', 'kitchen upper cabinets, rear run, either side of N8'),
     ('B5', 15, 'W', 30.0, 32.0, '66"–84"', 'range hood'),
     ('B6', 9, 'S', 2.6, 7.4, '30"–84"', 'Bath 2 vanity top, mirror and light'),
     ('B7', 8, 'W', 15.146, 17.646, '30"–84"', 'Bath 2 tub: shower valve, grab bar at 33"–36", towel bar'),
@@ -163,7 +167,7 @@ BLOCKING = [
     ('B9', 16, 'E', 28.4, 33.854, '30"–84"', 'primary vanity, mirrors and lights'),
     ('B10', 17, 'S', 53.542, 57.542, '30"–84"', 'primary shower: valve, grab bar, glass door hinge jamb, niche'),
     ('B11', 13, 'W', 1.0, 6.1, '54"–66"', 'laundry shelf over the washer and dryer'),
-    ('B12', 11, 'E', 1.0, 6.0, '18"–72"', 'mud bench and coat hooks'),
+    ('B12', 24, 'E', 1.0, 4.0, '18"–72"', 'mud bench and coat hooks; carry the band on along wall 11 to 6\'-0"'),
     ('B13', 6, 'N', 0.458, 7.854, '60"–72"', 'Bedroom 3 closet rod and shelf'),
     ('B14', 10, 'S', 0.458, 7.854, '60"–72"', 'Bedroom 2 closet rod and shelf'),
     ('B15', 3, 'S', 48.646, 57.542, '40"–84"', 'WIC rods and shelves (double hang on the north wall)'),
@@ -219,7 +223,7 @@ def s1():
         k = w[2] if P.along_x(w) else w[1]
         sg = 1 if swing == '+' else -1
         dist = 1.3 if kind != 'overhead' else 2.2
-        if n <= 4:
+        if w[5] == 'E':
             sg = -sg
             dist = 1.0
         x, y = ((c, k + sg * dist) if P.along_x(w) else (k + sg * dist, c))
@@ -229,7 +233,7 @@ def s1():
         tg, n, c, wd, h, sill, room, typ = wn
         w = P.wall(n)
         k = w[2] if P.along_x(w) else w[1]
-        out = {1: (0, -1.1), 2: (1.1, 0), 3: (0, 1.1), 4: (-1.1, 0)}[n]
+        out = (0, 1.1 * P.out_dir(w)) if P.along_x(w) else (1.1 * P.out_dir(w), 0)
         x, y = ((c, k) if P.along_x(w) else (k, c))
         X, Y = p.X(x + out[0]), p.Y(y + out[1])
         o.append(f'<g id="s1-t{tg}" class="tag" data-id="{tg}"><title>Window {tg}: {esc(room)}, {ft_in(wd)} x {ft_in(h)} {esc(typ)}, sill {ft_in(sill)}</title>{hit(X, Y, 11)}'
@@ -274,6 +278,9 @@ def s1():
             studs4 += n_st
             plate4 += 3 * L
     trusses = int(P.W / 2) + 1
+    # valley trusses: one every 2' from the gable's front wall line up to where the gable ridge dies into the main roof
+    lift = (5.5 / 12 * (0.5 + 0.5 * math.hypot(1, P.PITCH)) + 0.29) / P.PITCH
+    valleys = [(g['id'], (g['b'] - g['a']) - 2 * (y + lift)) for g in P.GABLES for y in range(2, int((g['b'] - g['a']) / 2), 2) if (g['b'] - g['a']) - 2 * (y + lift) >= 1]
     lrows = [
         ('L1', ['2x6 x 104-5/8" precut studs (exterior)', str(studs6), 'commons, corners, kings and jacks; +10% waste included in the order']),
         ('L2', ['2x4 x 104-5/8" precut studs (interior)', str(studs4), 'commons, kings, jacks; partition backers at every tee']),
@@ -281,8 +288,9 @@ def s1():
         ('L4', ['2x4 plates, 1 PT bottom + 2 top', f'{math.ceil(plate4)} lf', f'about {math.ceil(plate4 / 16)} 16\' boards']),
         ('L5', ['7/16" OSB wall sheathing, 4x9', str(math.ceil(sheath / 36 * 1.1)), 'exterior walls, less openings, +10%']),
         ('L6', ['Roof trusses, 6:12 common, 40\'-0" span, 24" o.c.', str(trusses - 2), '12" overhang, raised heel for R-60 at the walls; engineered by the truss supplier']),
-        ('L7', ['Gable end trusses, 16" o.c. verticals', '2', 'east and west ends; 2x4 gable bracing per the truss drawings']),
-        ('L8', ['Porch and patio: 6x6 posts, 2-2x10 beams, 2x6 rafters', '7 posts', 'shed roofs tied into the main truss tails; post bases on footings']),
+        ('L7', ['Gable end trusses, 16" o.c. verticals', '4', 'east and west ends, and the fronts of the porch and garage gables; 2x4 gable bracing per the truss drawings']),
+        ('L7a', ['Front gable trusses and valley sets', f'{len(valleys) + 1}', 'one 18\' common over the porch beam, then valley trusses on the main roof sheathing: ' + ', '.join(f'{g} {ft_in(w)}' for g, w in valleys)]),
+        ('L8', ['Porch and patio: 6x6 posts, 2-2x10 beams, 2x6 rafters', f'{len(P.POSTS)} posts', 'porch beam under the porch gable; patio shed from a ledger under the rear eave; post bases on footings']),
         ('L9', ['1/2" anchor bolts, 10" embed', str(math.ceil(2 * (P.W + P.D) / 6) + 12), 'exterior walls and garage separation at 6\' o.c., 12" from ends']),
         ('L10', ['Hurricane / uplift ties at each truss', str(2 * trusses), 'H2.5A or as the truss drawings']),
     ]
@@ -293,8 +301,8 @@ def s1():
         ops = openings_on(w[0])
         op_area = sum((b - a) * (6.67 if k not in ('window',) else 4.5) for a, b, k, _ in ops)
         sides = 1 if w[5] == 'E' else 2
-        if w[0] in (1,) :
-            L = 36.0      # the garage front gets no board
+        if w[0] == 25:
+            L = 6.0       # the laundry only: the garage front gets no board
         if w[0] == 2:
             L = 40 - 24   # east wall: the primary suite only (the garage stretch is bare)
         wall_area += sides * (L * P.CEIL - op_area)
@@ -308,8 +316,9 @@ def s1():
         ('Y6', ['Moisture-resistant 1/2" board in Bath 2, primary bath, laundry', 'included in Y1', '']),
     ]
     roof_rows = [
-        ('RF1', ['Common trusses', f'{trusses - 2} @ 24" o.c.', '6:12, 40\'-0" clear span bearing on walls 1 and 3; interior walls are non-bearing, held 1/2" below the bottom chord with partition clips']),
+        ('RF1', ['Common trusses', f'{trusses - 2} @ 24" o.c.', '6:12, 40\'-0" clear span bearing on the front walls (1, 25) and the rear walls (3, 26); interior walls are non-bearing, held 1/2" below the bottom chord with partition clips. Over the porch and patio the trusses bear on walls 23 and 28 and cantilever 4\' to the eave line (truss designer to confirm, or add a flush beam)']),
         ('RF2', ['Gable ends', '2', 'east and west, sheathed, 12" rake overhang on outlookers']),
+        ('RF2a', ['Front gables', '2', 'CG1 over the porch (18\' wide, front on the porch beam) and CG2 over the garage (22\' wide, front on wall 25); ridges run north and die into the main roof, valley sets on the main sheathing, ice barrier in both valleys']),
         ('RF3', ['Attic access', '1', '22" x 54" insulated pull-down stair in the garage ceiling (F, near wall 14); the way to FAU-1']),
         ('RF4', ['FAU-1 platform', '1', '3/4" OSB platform over the back hall, 30" service side, catwalk from the access (M1305.1.3)']),
         ('RF5', ['Attic ventilation', '1/300', 'continuous soffit intake, ridge vent; baffles at every bay']),
@@ -321,7 +330,8 @@ def s1():
                  'Plan coordinates: x runs east from the outside face of the west wall framing, y runs north from the outside face of the front wall framing; the grid is 5\'. The front of the house is drawn facing south: confirm the lot orientation.',
                  'Blue dimensions are each room\'s clear size, stud face to stud face: exterior walls to the inside face of the 2x6 studs, interior walls to the stud face 1-3/4" off the centre line.',
                  'Ceilings are 9\'-0" flat throughout, including the garage, on 104-5/8" precut studs with a PT bottom plate and a double top plate.',
-                 'The roof is a simple 6:12 gable, ridge east–west: trusses clear-span 40\' from wall 1 to wall 3, so walls 1 and 3 bear and every interior wall is a partition. Headers in walls 1 and 3 are sized for the truss load; walls 2 and 4 are gable ends.',
+                 'The roof is a 6:12 gable, ridge east–west, with two front-facing gables as the front elevation: one over the porch and one over the garage. The main trusses clear-span 40\' front to rear, so the front and rear walls bear and every interior wall is a partition; walls 2 and 4 are gable ends. The front gables are framed with valley sets on top of the main roof.',
+                 'The porch and the patio are set 4\' into the house: the walls step in around them (walls 22–24 at the porch, 27–29 at the patio), and the slab follows. The porch is 17\'-6" x 6\' (4\' under the house roof, 2\' under the porch gable on the beam and posts); the patio is 10\'-6" x 10\' (4\' under the house roof, 6\' under a shed).',
                  'Foundation: slab on grade, thickened edge or frost-protected stem wall to the local frost depth; 10-mil vapour retarder; R-10 under-slab perimeter insulation 4\' in (IECC climate zone 6 assumed). Garage slab 4" below the house slab, sloped 1/8"/ft to the door.',
                  'Garage separation (R302.6): 1/2" gypsum on the garage side of walls 13 and 14, 5/8" Type X on the garage ceiling; D3 is 20-minute rated and self-closing. Seal every penetration in those walls.',
                  'Door rough openings: prehung interior 2" over the leaf width x 82-1/2"; exterior per the door maker. Window rough openings 1/2" over the unit size; heads at 8\'-0".',
@@ -332,7 +342,7 @@ def s1():
                  'Bath 2 is drawn 7\'-5" x 10\'-2" clear: the BuildWise label says 5\' x 11\', which does not fit beside the 3\'-8" hall. Keep, or rework the bedroom wing?',
                  'Interior door height: 6\'-8" drawn. 8\'-0" doors suit 9\' ceilings better (D6–D16, about $40–$90 more each).',
                  'Primary bedroom door D12 opens off the kitchen corner, as on the plan; the garage keeps its full 22\' width. Alternative: shift it to the back-hall alcove and narrow the garage to 21\'.',
-                 'Front porch and rear patio roofs: shed roofs on 6x6 posts drawn on both, as the elevations show. Confirm the patio is covered.',
+                 'Porch and patio insets: drawn 4\' deep, read from the BuildWise plan; the living room is 17\'-8" x 13\'-5" and the dining room 10\'-7" x 17\'-5" as a result. Confirm the depths, and whether the patio should sit wholly under the roof.',
                  'Truss heel height and snow load: confirm the site ground snow load for the truss engineering and the bearing-wall headers.',
              ]),
              '<section class="wide">', table('Wall schedule', ['Wall', 'Runs', 'Length', 'Framing', 'Openings', 'Notes'], wrows, 'One row per wall. Click a row to find it on the plan.'),
