@@ -184,7 +184,7 @@ FIXTURES = [
     # Kitchen
     ('island', 24.5, 28.0, 25.5, 32.0, 'W', 'Island', 'sink and dishwasher, seating on the dining side'),
     ('counter', 31.854, 33.854, 27.8, 35.0, 'W', 'Counter', 'wall run on wall 15: range between base cabinets, uppers above'),
-    ('range', 31.854, 33.854, 29.75, 32.25, 'W', 'Range', '30" electric range, ducted hood above'),
+    ('range', 31.854, 33.854, 29.75, 32.25, 'W', 'Range', '30" gas range, ducted hood above'),
     ('fridge', 28.3, 31.3, 32.354, 34.854, 'S', 'Refrigerator', '36" refrigerator, ice maker'),
     ('counter', 23.0, 27.854, 37.542, 39.542, 'S', 'Counter', 'rear run under the window, uppers either side'),
     ('shelves', 28.146, 33.854, 38.042, 39.542, 'S', 'Pantry shelves', ''),
@@ -212,5 +212,5 @@ FIXTURES = [
     ('car', 46.0, 52.4, 1.5, 17.0, 'S', 'Car', ''),
     ('stair', 40.0, 41.83, 19.0, 23.5, 'N', 'Attic access', '22" x 54" insulated pull-down attic stair; the way to FAU-1'),
     # Mechanical room
-    ('wh', 55.6, 57.6, 21.5, 23.5, 'W', 'Water heater', '50 gal electric, in a drain pan, on a stand'),
+    ('wh', 55.6, 57.6, 21.5, 23.5, 'W', 'Water heater', '50 gal gas, power direct vent, in a drain pan on an 18" stand'),
 ]

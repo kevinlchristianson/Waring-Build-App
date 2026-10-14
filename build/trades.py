@@ -5,9 +5,9 @@ import math
 # Panel MP: 200A main breaker load centre, 40 space, in the garage mechanical room.
 # Circuits: key, load, breaker, wire, serves
 CIRCUITS = [
-    ('1-2', 'Range', '240V 50A 2P', '#6 Cu NM', 'kitchen, wall 15'),
+    ('1', 'Gas range (igniter, oven, clock)', '20A AFCI/GFCI', '#12 Cu', 'kitchen, wall 15; space 2 left spare'),
     ('3-4', 'Dryer', '240V 30A 2P', '#10 Cu NM (4-wire)', 'mud / laundry'),
-    ('5-6', 'Water heater', '240V 30A 2P', '#10 Cu NM', 'mechanical room'),
+    ('5', 'Gas water heater (power-vent blower)', '20A GFCI', '#12 Cu', 'mechanical room; space 6 left spare'),
     ('7-8', 'Air conditioner AC-1 (outdoor unit)', '240V 25A 2P (per nameplate MOCP)', '#10 Cu', 'east wall, disconnect at the unit'),
     ('9', 'Gas furnace FAU-1 (blower, inducer, controls)', '120V 15A', '#14 Cu', 'attic, service switch at the unit; space 10 left spare'),
     ('11', 'Kitchen small appliance 1', '20A AFCI/GFCI', '#12 Cu', 'kitchen counters: rear run, wall run south'),
@@ -89,7 +89,7 @@ IN = 3.5 / 12 / 2  # half an interior wall
 # ---- mechanical room: panel, media, water heater
 dev('panel', 52.146, 21.0, 'E', 60, 'panel', 'Mech Room', 'Main panel MP on wall 20, garage-side mech room; 30" x 36" working space in front (110.26), service entrance from the meter on the east wall')
 dev('media', 57.542, 19.6, 'W', 60, 'data', 'Mech Room', 'Structured media enclosure on wall 2: every Cat6 home run lands here; doorbell transformer beside it')
-dev('jbox', 57.542, 22.5, 'W', 48, '5-6', 'Mech Room', 'Water heater: hardwired from a box on wall 2, disconnect within sight')
+dev('ded', 57.542, 22.5, 'W', 60, '5', 'Mech Room', 'Water heater: receptacle for the power-vent blower, above the tank on wall 2')
 dev('surf', 54.9, 20.5, 'c', 108, '26', 'Mech Room', leg='mech')
 dev('sw', 56.3, 18.146, 'N', 48, '26', 'Mech Room', 'inside, latch side of D16', leg='mech')
 # ---- outside the east wall: air conditioner
@@ -167,7 +167,7 @@ dev('gfci', 23.8, 39.542, 'S', 44, '11', 'Kitchen', 'rear run')
 dev('gfci', 27.5, 39.542, 'S', 44, '11', 'Kitchen', 'rear run, east of the window')
 dev('gfci', 33.854, 28.6, 'W', 44, '11', 'Kitchen', 'wall run, south of the range')
 dev('gfci', 33.854, 34.2, 'W', 44, '12', 'Kitchen', 'wall run, north of the range')
-dev('r240', 33.854, 31.0, 'W', 4, '1-2', 'Kitchen', 'range receptacle behind the range')
+dev('ded', 33.854, 31.0, 'W', 4, '1', 'Kitchen', '120V receptacle behind the gas range, beside the gas stub')
 dev('hood', 33.6, 31.0, 'W', 66, '25', 'Kitchen', 'range hood under the upper cabinet', leg='hood')
 dev('gfci', 28.0, 26.6, 'E', 30, '12', 'Kitchen', 'island, east face, south end')
 dev('gfci', 28.0, 31.2, 'E', 30, '12', 'Kitchen', 'island, east face, north end')
@@ -298,7 +298,7 @@ PFIX = [
     dict(id='F9', name='Primary lavatory, north', kind='lav', x=48.146, y=32.5, dfu=1, trap='1-1/4"', hot=True, cold=True, vent='V2', h=20, note='trap arm into wall 16'),
     dict(id='F10', name='Primary shower', kind='shower', x=55.54, y=31.6, dfu=2, trap='2"', hot=True, cold=True, vent='V2', h=48, note='centre drain, PVC liner or a foam pan; valve on wall 17 at 48", head at 80"'),
     dict(id='F11', name='Primary toilet', kind='wc', x=56.542, y=25.75, dfu=3, trap='3"', hot=False, cold=True, vent='V2', h=8, note='1.28 gpf, 12" rough from the east wall; supply up through the slab'),
-    dict(id='F12', name='Water heater', kind='wh', x=56.6, y=22.5, dfu=0, trap='—', hot=True, cold=True, vent='—', h=0, note='50 gal electric (or heat pump water heater), thermal expansion tank, T&P discharge to within 6" of the garage floor, in a drain pan'),
+    dict(id='F12', name='Water heater', kind='wh', x=56.6, y=22.5, dfu=0, trap='—', hot=True, cold=True, vent='—', h=0, note='50 gal gas, power direct vent (sealed combustion, 2-pipe PVC through the roof), on an 18" stand in the garage (G2408.2), thermal expansion tank, T&P discharge to within 6" of the garage floor, in a drain pan'),
     dict(id='F13', name='Hose bib, front', kind='hb', x=33.6, y=0.458, dfu=0, trap='—', hot=False, cold=True, vent='—', h=24, note='frost-free sillcock through wall 1 from the laundry, vacuum breaker'),
     dict(id='F14', name='Hose bib, rear', kind='hb', x=27.2, y=39.542, dfu=0, trap='—', hot=False, cold=True, vent='—', h=24, note='frost-free sillcock through wall 3 from the rear counter base, vacuum breaker'),
 ]
@@ -409,8 +409,15 @@ GAS = [
     dict(id='GS1', size='3/4"', where='wall', pts=[(58.0, 15.0), (57.5, 15.0), (57.5, 18.8)],
          note='3/4" black steel (or CSST) from the meter, through the east wall and up the garage side of it, protected from vehicles, into the mech room'),
     dict(id='GS2', size='3/4"', where='riser', pts=[(57.5, 18.8)],
-         note='Main gas shutoff and capped tee for a future range or water heater in the mech room, then up through the garage ceiling (fire-caulked)'),
+         note='Main gas shutoff and drip leg in the mech room; tee to the water heater, then up through the garage ceiling (fire-caulked)'),
+    dict(id='GS4', size='1/2"', where='low', h=3.0, to=1.6, pts=[(57.5, 18.8), (57.5, 21.0), (56.6, 21.5)],
+         note='1/2" black steel to the water heater in the mech room, shutoff and sediment trap at the unit'),
     dict(id='GS3', size='1/2"', where='attic', pts=[(57.5, 18.8), (37.2, 18.8), (37.2, 13.0), (34.6, 13.0)],
          note='1/2" CSST in the attic over the garage ceiling to FAU-1, about 30\', supported every 6\'; bonded with #6 Cu to the electrode system (G2411); shutoff and sediment trap within 6\' of the furnace'),
+    dict(id='GS5', size='1/2"', where='attic', to=1.0, pts=[(37.2, 18.8), (37.2, 31.0), (34.0, 31.0)],
+         note='1/2" CSST tee off GS3 in the attic, north over the primary bedroom ceiling, down inside wall 15 to a shutoff behind the range, 12" AFF'),
 ]
-FLUE = dict(pts=[(33.0, 15.0), (33.0, 21.6)], note='FAU-1 vent and combustion air: 2" PVC intake and exhaust (direct vent, sealed combustion), up through the rear roof slope with a concentric termination 12" above the roof and the snow line; slope back to the furnace')
+FLUES = [
+    dict(id='V1', name='Furnace vent', pts=[(33.0, 15.0), (33.0, 21.6)], note='FAU-1 vent and combustion air: 2" PVC intake and exhaust (direct vent, sealed combustion), up through the rear roof slope with a concentric termination 12" above the roof and the snow line; slope back to the furnace'),
+    dict(id='V2', name='Water heater vent', pts=[(56.6, 22.5), (56.6, 22.5)], note='Water heater vent and combustion air: 2" or 3" PVC per the manual (power direct vent), up through the garage ceiling and the rear roof slope, concentric termination 12" above the roof and the snow line'),
+]

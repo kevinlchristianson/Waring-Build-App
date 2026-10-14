@@ -516,7 +516,7 @@ def e1():
     bomrows += [
         ('NM14', ['14/2 NM-B (and 14/3 for 3-ways)', f'{math.ceil(nm14 / 250)} x 250\' rolls', f'about {math.ceil(nm14)}\' from the runs on the circuit sheets, +15%']),
         ('NM12', ['12/2 NM-B', f'{math.ceil(nm12 / 250)} x 250\' rolls', f'about {math.ceil(nm12)}\'']),
-        ('NM6', ['6/3 NM-B (range), 10/3 (dryer), 10/2 (water heater, AC-1)', 'by the run', 'measure on site']),
+        ('NM6', ['10/3 NM-B (dryer), 10/2 (AC-1)', 'by the run', 'measure on site']),
         ('BOX', ['Device boxes, new-work, with covers', str(len([d for d in T.DEVICES if d['id'][0] in 'RS']) + 4), 'fan-rated pancake boxes at the fan locations']),
         ('CAT6', ['Cat6 CMR', f'{math.ceil(sum(abs(d["x"] - media["x"]) + abs(d["y"] - media["y"]) + 15 for d in ds) / 1000 + 0.5)} x 1000\' box', 'home runs to the media enclosure']),
     ]
@@ -530,10 +530,10 @@ def e1():
                  'Smoke alarms in every bedroom, smoke/CO alarms outside the bedrooms and at the garage entry, all hardwired, interconnected, with battery backup (R314, R315).',
                  'Circuit sheets E-1.1 onward show one circuit each with its cable run drawn as a chain from MP through every device in nearest-neighbour order (solid for receptacle and appliance circuits, dashed for lighting). The run is a proposed order, not a required one. E-1.D shows the Cat6 home runs to the media enclosure.',
                  'Switch plan: every light belongs to one switch leg (table below). Clicking a light lights up every device on its leg in blue; clicking a leg row does the same.',
-                 'Heat is natural gas (furnace FAU-1 on a 120V 15A circuit); the range, dryer and water heater are drawn electric. NEC 220.82 estimate: about 25 kVA, 105A, inside the 200A service. Bond CSST gas piping to the electrode system with #6 Cu (G2411, NEC 250.104(B)).',
+                 'Natural gas for the furnace, range and water heater; each needs only a 120V circuit. The dryer is electric (240V 30A). NEC 220.82 estimate: about 15 kVA, 65A, well inside the 200A service. Bond CSST gas piping to the electrode system with #6 Cu (G2411, NEC 250.104(B)).',
              ]) + '</section>',
              open_items([
-                 'Range, dryer and water heater drawn electric. If any goes gas, its 240V circuit (1-2, 3-4 or 5-6) becomes a 120V receptacle.',
+                 'Dryer drawn electric. A gas dryer would need a 1/2" tee from the attic line and a 120V receptacle in place of circuit 3-4.',
                  'EV charging: add a 240V 50A circuit to the garage now (about $350 rough-in), or leave a spare 2-pole space and conduit?',
                  'Ceiling fans in the three bedrooms drawn on fan-rated boxes. Add one in the living room?',
                  'Data: Cat6 to each bedroom, both TVs and two ceiling access points drawn. Add cameras at the doors or more drops?',
@@ -616,7 +616,7 @@ def p1():
         ('PEX', ['PEX-A 1/2" (red and blue)', f'{math.ceil(pex * 1.15 / 100)} x 100\' coils', f'about {math.ceil(pex)}\' of home runs']),
         ('PEX34', ['PEX-A 3/4" and 1"', 'by the run', 'tub, washer and water heater runs, service']),
         ('MAN', ['PEX manifold, 12-port hot / 12-port cold, with valves', '1', 'MF in the mech room']),
-        ('WH', ['Water heater, 50 gal electric (or heat pump), pan, expansion tank', '1', '']),
+        ('WH', ['Water heater, 50 gal gas, power direct vent, pan, stand, expansion tank', '1', 'gas and vent on M-1']),
         ('SLV', ['Sleeves for PEX through the slab and the garage foundation', str(len(T.BRANCHES) + 4), 'protect every run where it leaves the slab']),
         ('SC', ['Frost-free sillcocks, 12"', '2', 'F13, F14']),
         ('WB', ['Washer box with valves and 2" drain', '1', 'F7']),
@@ -629,7 +629,7 @@ def p1():
                  'Vents: each bathroom group is wet-vented through its lavatory (P3108), with one 2" dry vent rising in an interior wall. The three vents join in the attic and leave through one 3" vent on the rear roof slope, out of sight from the street.',
                  'Supply: PEX-A home runs from the manifold MF in the garage mech room, 1/2" to each fixture (3/4" to the tub and washer), under the slab in sleeves with no fittings below the slab. The bundle crosses under the garage slab: insulate it there, and keep every line on the warm side of the insulation in walls 13 and 14.',
                  'No supply lines in exterior walls: the toilets are fed up through the slab and the tub valve is on wall 8 (interior).',
-                 'Water heater: 50 gal electric in the mech room on a pan with a drain, thermal expansion tank, T&P discharge to within 6" of the floor. A heat pump water heater fits the same space if the room is big enough for its air.',
+                 'Water heater: 50 gal gas, power direct vent (sealed combustion, so the closed mech room needs no combustion-air openings), on an 18" stand because it is in the garage (G2408.2), in a pan with a drain, thermal expansion tank, T&P discharge to within 6" of the floor. Gas piping and the roof vent are on M-1.',
              ]) + '</section>',
              open_items([
                  'Sewer or septic, and which side of the lot? The building drain is drawn leaving the front wall under the laundry.',
@@ -682,9 +682,9 @@ def m1():
     gm = T.GAS_METER
     X, Y = p.X(gm['x']), p.Y(gm['y'])
     o.append(sym('m1', 'GM', gm['note'], hit(X, Y, 9) + f'<rect x="{r1(X - 5)}" y="{r1(Y - 7)}" width="10" height="14" fill="#fff" stroke="{GASC}" stroke-width="1.3"/><text x="{r1(X + 8)}" y="{r1(Y + 2)}" font-size="5.5" font-weight="700" fill="{GASC}">GAS METER</text>'))
-    fl = T.FLUE
-    X, Y = p.X(fl['pts'][-1][0]), p.Y(fl['pts'][-1][1])
-    o.append(sym('m1', 'V1', fl['note'], p.path(fl['pts'], stroke='#555', stroke_width='1.6') + hit(X, Y, 9) + f'<circle cx="{r1(X)}" cy="{r1(Y)}" r="4.5" fill="#fff" stroke="#555" stroke-width="1.4"/><circle cx="{r1(X)}" cy="{r1(Y)}" r="2" fill="#555"/><text x="{r1(X + 7)}" y="{r1(Y - 4)}" font-size="5" fill="#555">V1 furnace vent</text>'))
+    for fl in T.FLUES:
+        X, Y = p.X(fl['pts'][-1][0]), p.Y(fl['pts'][-1][1])
+        o.append(sym('m1', fl['id'], fl['note'], p.path(fl['pts'], stroke='#555', stroke_width='1.6') + hit(X, Y, 9) + f'<circle cx="{r1(X)}" cy="{r1(Y)}" r="4.5" fill="#fff" stroke="#555" stroke-width="1.4"/><circle cx="{r1(X)}" cy="{r1(Y)}" r="2" fill="#555"/><text x="{r1(X - 7 if fl['pts'][-1][0] > 50 else X + 7)}" y="{r1(Y + 9 if fl['pts'][-1][0] > 50 else Y - 4)}" font-size="5" fill="#555" text-anchor="{'end' if fl['pts'][-1][0] > 50 else 'start'}">{fl["id"]} {fl["name"].lower()}</text>'))
     o.append(sym('m1', 'CD', 'Condensate: 3/4" PVC from FAU-1, 1/4"/ft, down wall 13 to the washer standpipe with an air gap; the auxiliary pan has a float switch that stops the unit', p.path(T.CONDENSATE, stroke='#2a9d8f', stroke_width='1.1', stroke_dasharray='3,2')))
     for gid, room, x, y, cfm, flex, frm in T.REGISTERS:
         X, Y = p.X(x), p.Y(y)
@@ -715,7 +715,8 @@ def m1():
         ('FAU-1', ['FAU-1', 'Gas furnace, condensing, with A/C coil', 'attic over the back hall', '60,000 BTU/h input, 96% AFUE, two-stage; 1,000 CFM variable speed; 2.5-ton coil', T.AH['note']]),
         ('AC-1', ['AC-1', 'Air conditioner, outdoor', 'east side, by the mech room', '2.5 ton, 15.2 SEER2 or better', T.HP['note']]),
         ('GM', ['GM', 'Gas meter', 'garage east wall', 'by the utility', T.GAS_METER['note']]),
-        ('V1', ['V1', 'Furnace vent', 'rear roof slope', '2" PVC, concentric', T.FLUE['note']]),
+        ('V1', ['V1', 'Furnace vent', 'rear roof slope', '2" PVC, concentric', T.FLUES[0]['note']]),
+        ('V2', ['V2', 'Water heater vent', 'rear roof slope, over the mech room', 'PVC per the manual, concentric', T.FLUES[1]['note']]),
         ('T1', ['T1', 'Thermostat', 'wall 5, living room', 'communicating, with outdoor sensor', T.TSTATS[0]['note']]),
     ]
     for e in T.EXHAUST:
@@ -739,19 +740,19 @@ def m1():
         ('MST', ['Mastic, UL 181 tape, duct straps', 'lot', 'every joint sealed; total leakage ≤ 4 CFM25 per 100 sq ft (IECC R403.3.5)']),
     ]
     below = ['<div class="below">',
-             '<section><h2>M-1 HVAC</h2>' + legend([(DUCT, 'supply trunks and flex, ceiling diffusers G#'), (RET, 'returns RG# and jump ducts J#'), ('#7a4fa0', 'refrigerant line set'), ('#2a9d8f', 'condensate'), (GASC, 'natural gas'), ('#555', 'furnace vent V1'), ('#8d8d8d', 'exhaust ducts EF#')]) +
+             '<section><h2>M-1 HVAC</h2>' + legend([(DUCT, 'supply trunks and flex, ceiling diffusers G#'), (RET, 'returns RG# and jump ducts J#'), ('#7a4fa0', 'refrigerant line set'), ('#2a9d8f', 'condensate'), (GASC, 'natural gas'), ('#555', 'appliance vents V#'), ('#8d8d8d', 'exhaust ducts EF#')]) +
              notes([
                  'The gas furnace FAU-1 sits in the attic on a platform over the back hall, as the owner asked; the mechanical room is in the garage (water heater, panel, manifold). The way to FAU-1 is the pull-down stair in the garage ceiling, with a catwalk and a 30" service space (M1305.1.3), a light switched at the access and a receptacle at the unit.',
                  'Every duct is in the attic: sheet-metal trunks with R-8 wrap, R-8 flex to ceiling diffusers, every joint sealed with mastic. Keep the flex runs short and straight, and pull them tight. Bury the ducts in the attic insulation where they cross the ceiling.',
                  'Airflow (1,000 CFM) is shared by room area and exposure for pricing; the HVAC contractor\'s Manual J (loads), S (equipment) and D (ducts) set the final numbers. Two filtered returns: RG1 under the unit and RG2 in the bedroom hall; the bedrooms return through jump ducts J1–J3.',
                  'Heat: natural gas. FAU-1 is a sealed-combustion condensing furnace (direct vent), so it takes no combustion air from the attic; its 2" PVC intake and exhaust leave through the rear roof slope (V1). Cooling from AC-1 through the coil on the furnace. Zone 6 assumed; confirm the design temperature.',
-                 'Gas: the meter is on the garage east wall. The line runs up the inside of that wall into the mech room (main shutoff, capped tee for later), up into the attic and west to FAU-1, with a shutoff and sediment trap at the unit. Size it for the furnace plus the capped tee (about 160 CFH at 1/2 psi or less: 3/4" to the mech room). CSST is bonded to the electrode system; the gas fitter does the pressure test.',
+                 'Gas: the meter is on the garage east wall. The line runs up the inside of that wall into the mech room (main shutoff, capped tee for later), up into the attic and west to FAU-1, with a shutoff and sediment trap at the unit. Size it for the furnace, range and water heater (about 175 CFH at 7" w.c.: 3/4" to the mech room, 1/2" branches). The range branch GS5 tees off in the attic and drops inside wall 15 to a shutoff behind the range; the water heater branch GS4 stays in the mech room. CSST is bonded to the electrode system; the gas fitter does the pressure test.',
                  'Ventilation: EF2 in the primary bath runs continuously at 50 CFM to meet IRC M1505.4 whole-house ventilation, boosting to 80 for showers. An ERV is the better choice in a tight cold-climate house (open item).',
-                 'Range hood 300 CFM, ducted 6" to a roof cap; under 400 CFM, so no makeup air is required (M1503.6). Dryer vent rigid 4", 11\' developed length with two elbows, roof cap on the front slope.',
+                 'Range hood 300 CFM over the gas range, ducted 6" to a roof cap; under 400 CFM, so no makeup air is required (M1503.6). Dryer vent rigid 4", 11\' developed length with two elbows, roof cap on the front slope.',
              ]) + '</section>',
              open_items([
                  'Furnace in the attic: in a cold climate, the condensate lines need protection from freezing (route inside the insulation or add heat tape). Confirm, or move FAU-1 into a conditioned closet (the back hall alcove fits an upflow unit).',
-                 'Gas for the water heater, range and dryer too? They are drawn electric; the capped tee in the mech room is there if any of them switch.',
+                 'Water heater: 50 gal power direct vent tank drawn. A gas tankless (about $1,500 more) saves the stand and space but needs a larger gas line.',
                  'Whole-house ventilation: continuous bath fan (drawn) or an ERV (about $2,500–$4,000 installed)?',
                  'Manual J/S/D from the HVAC contractor before ordering equipment; the 2.5-ton size is an estimate for 1,800 sq ft.',
              ]),

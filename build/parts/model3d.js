@@ -501,12 +501,14 @@ function buildHVAC() {
     const d = { kind: 'hvac', text: `Gas ${g.id}, ${g.size}: ${g.note}` }, r = parseInt(g.size) === 3 ? 0.07 : 0.05;
     if (g.where === 'wall') { tube({ x: gm.x, y: gm.y, h: GH }, { x: g.pts[0][0], y: g.pts[0][1], h: GH }, r, MAT.gas, d, G.hvac); polyline(g.pts, GH, r, MAT.gas, d, G.hvac); }
     else if (g.where === 'riser') { const [x, y] = g.pts[0]; tube({ x, y, h: GH }, { x, y, h: GA }, r, MAT.gas, d, G.hvac); box(x - 0.2, x + 0.2, y - 0.2, y + 0.2, GH - 0.6, GH, MAT.gas, { kind: 'hvac', text: 'Main gas shutoff, drip leg and capped tee in the mech room' }, G.hvac); }
-    else { polyline(g.pts, GA, r, MAT.gas, d, G.hvac); const [x, y] = g.pts[g.pts.length - 1]; tube({ x, y, h: GA }, { x, y, h: PLATE + 1.2 }, r, MAT.gas, d, G.hvac); }
+    else { const h = g.where === 'low' ? g.h : GA; polyline(g.pts, h, r, MAT.gas, d, G.hvac); const [x, y] = g.pts[g.pts.length - 1]; tube({ x, y, h }, { x, y, h: g.to ?? PLATE + 1.2 }, r, MAT.gas, d, G.hvac); }
   }
-  const fl = hv.flue, [fx0, fy0] = fl.pts[0], [fx1, fy1] = fl.pts[fl.pts.length - 1], fd = { kind: 'hvac', text: fl.note };
-  tube({ x: fx0, y: fy0, h: PLATE + 1.6 }, { x: fx0, y: fy0, h: PLATE + 2.6 }, 0.12, MAT.flue, fd, G.hvac);
-  tube({ x: fx0, y: fy0, h: PLATE + 2.6 }, { x: fx1, y: fy1, h: PLATE + 2.6 + 0.02 * (fy1 - fy0) }, 0.12, MAT.flue, fd, G.hvac);
-  tube({ x: fx1, y: fy1, h: PLATE + 2.6 + 0.02 * (fy1 - fy0) }, { x: fx1, y: fy1, h: roofAt(fy1) + 1.6 }, 0.12, MAT.flue, fd, G.hvac);
+  for (const fl of hv.flues) {
+    const [fx0, fy0] = fl.pts[0], [fx1, fy1] = fl.pts[fl.pts.length - 1], fd = { kind: 'hvac', text: `${fl.id} ${fl.name}: ${fl.note}` }, h0 = fl.id === 'V1' ? PLATE + 1.6 : 5.6, hr = PLATE + 2.6 + 0.02 * Math.abs(fy1 - fy0);
+    tube({ x: fx0, y: fy0, h: h0 }, { x: fx0, y: fy0, h: PLATE + 2.6 }, 0.12, MAT.flue, fd, G.hvac);
+    if (fx1 !== fx0 || fy1 !== fy0) tube({ x: fx0, y: fy0, h: PLATE + 2.6 }, { x: fx1, y: fy1, h: hr }, 0.12, MAT.flue, fd, G.hvac);
+    tube({ x: fx1, y: fy1, h: hr }, { x: fx1, y: fy1, h: roofAt(fy1) + 1.6 }, 0.12, MAT.flue, fd, G.hvac);
+  }
 }
 
 // ---------------------------------------------------------------- roof: 6:12 common trusses at 24" o.c. spanning north–south, ridge east–west
