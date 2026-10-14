@@ -106,7 +106,7 @@ def base_layers(p, walls_colour=None, faint=False, fixtures=True, labels=True, d
             o.append(p.rect(x1, x2, y1, y2, fill='#ece9e3', stroke='#b9b3a8', stroke_width='0.8'))
         # AC pad and porch / patio posts
         o.append(p.rect(58.4, 61.6, 19.4, 22.6, fill='#e2ded6', stroke='#b9b3a8', stroke_width='0.6'))
-    o.append(p.rect(0, P.W, 0, P.D, fill='#fff'))
+    o.append(tag('path', d='M' + 'L'.join(p.pt(x, y) for x, y in P.FOOTPRINT) + 'Z', fill='#fff'))
     for r in P.ROOMS:
         cx1, cx2, cy1, cy2 = P.clear(r)
         o.append(p.rect(cx1, cx2, cy1, cy2, fill=COLORS[r[5]]))
@@ -119,7 +119,7 @@ def base_layers(p, walls_colour=None, faint=False, fixtures=True, labels=True, d
             o.append(p.rect(x1, x2, y1, y2, fill=col))
     o += [door_svg(p, d) for d in P.DOORS] + [window_svg(p, w) for w in P.WINDOWS]
     if outdoor:
-        for x, y in ((12.4, -5.6), (18.3, -5.6), (24.1, -5.6), (29.6, -5.6), (12.9, 49.6), (19.5, 49.6), (26.1, 49.6)):
+        for x, y, _ in P.POSTS:
             o.append(p.rect(x - 0.25, x + 0.25, y - 0.25, y + 0.25, fill='#8a7a64'))
     if dims:
         o.append(dims)
@@ -402,7 +402,7 @@ def room_dims(p, ink='#4f6b8a', fs=6.5):
 
 
 # ------------------------------------------------------------------ where a thing is, in words a framer can tape
-WALL_NAME = {1: 'front ext. wall', 2: 'east ext. wall', 3: 'rear ext. wall', 4: 'west ext. wall'}
+WALL_NAME = {1: 'front ext. wall', 2: 'east ext. wall', 3: 'rear ext. wall', 4: 'west ext. wall', 23: 'front ext. wall', 25: 'front ext. wall', 26: 'rear ext. wall', 28: 'rear ext. wall'}
 
 
 def wname(n):

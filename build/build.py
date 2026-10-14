@@ -19,7 +19,7 @@ import trades as T        # noqa: E402
 import sheets as S        # noqa: E402
 from draw import Paper, base_layers, room_dims, esc, ft_in, wall_rect, openings_on, locate  # noqa: E402
 
-VERSION = 'v2'
+VERSION = 'v3'
 DATE = '2026-10-14'
 ROOT = os.path.dirname(HERE)
 PARTS = os.path.join(HERE, 'parts')
@@ -38,7 +38,8 @@ def set_data():
             if wn[1] == n:
                 ops.append(dict(tag=wn[0], kind='window', lo=wn[2] - wn[3] / 2, hi=wn[2] + wn[3] / 2, sill=wn[5], head=wn[5] + wn[4], room=wn[6]))
         ax = P.along_x(w)
-        walls.append(dict(n=n, x1=x1, y1=y1, x2=x2, y2=y2, alongX=ax, type=typ, t=P.THICK[typ], rect=wall_rect(w), ops=ops,
+        out = P.out_dir(w) if typ == 'E' else 0
+        walls.append(dict(n=n, x1=x1, y1=y1, x2=x2, y2=y2, alongX=ax, out=out, type=typ, t=P.THICK[typ], rect=wall_rect(w), ops=ops,
                           text=f'Wall {n}: {ft_in(S.wall_len(w))}, {S.wall_runs(w)}. {S.WALL_TYPE[typ]}. {note[0].upper() + note[1:]}'))
     rooms = [dict(name=r[0], rect=P.clear(r), color=r[5]) for r in P.ROOMS]
     fixtures = [dict(kind=f[0], x1=f[1], x2=f[2], y1=f[3], y2=f[4], front=f[5], label=f[6], note=f[7]) for f in P.FIXTURES]
@@ -50,7 +51,7 @@ def set_data():
     hvac = dict(ah=T.AH, sp=T.SUPPLY_PLENUM, rp=T.RETURN_PLENUM, trunks=T.DTRUNKS, registers=T.REGISTERS, returns=T.RETURNS, jumps=T.JUMPS,
                 tstats=T.TSTATS, exhaust=T.EXHAUST, hp=T.HP, lineset=T.LINESET, condensate=T.CONDENSATE,
                 gas=T.GAS, meter=T.GAS_METER, flues=T.FLUES)
-    return dict(date=DATE, W=P.W, D=P.D, ceil=P.CEIL, pitch=P.PITCH, overhang=P.OVERHANG, tExt=P.T_EXT, tInt=P.T_INT,
+    return dict(date=DATE, W=P.W, D=P.D, footprint=P.FOOTPRINT, posts=P.POSTS, roof=dict(gables=P.GABLES), ceil=P.CEIL, pitch=P.PITCH, overhang=P.OVERHANG, tExt=P.T_EXT, tInt=P.T_INT,
                 walls=walls, rooms=rooms, fixtures=fixtures, outdoor=P.OUTDOOR, devices=devices, plumbing=plumbing, hvac=hvac,
                 base=dict(s=20))
 
@@ -59,7 +60,7 @@ def base_svg():
     p = Paper(20, 0, P.W, 0, P.D, 0, 0)
     body = base_layers(p, outdoor=False, dims=room_dims(p, fs=8.5))
     svg = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{p.w:.0f}" height="{p.h:.0f}" viewBox="0 0 {p.w:.0f} {p.h:.0f}" font-family="IBM Plex Sans, Segoe UI, Helvetica, Arial, sans-serif" role="img" aria-label="A-1 Base plan">'
-           f'<rect width="100%" height="100%" fill="#fff"/>{body}</svg>')
+           f'{body}</svg>')
     return base64.b64encode(svg.encode()).decode()
 
 

@@ -129,39 +129,39 @@ dev('ef', 2.6, 19.4, 'c', 108, '24', 'Bath 2', 'between the toilet and the tub',
 dev('sw', 7.854, 22.0, 'W', 48, '24', 'Bath 2', 'latch side of D8: 3-gang with the next two', leg='bath2')
 dev('tmr', 7.854, 22.4, 'W', 48, '24', 'Bath 2', 'fan timer', leg='bath2-fan')
 # ---- living room
-dev('rec', 17.8, 0.458, 'N', 16, '22', 'Living Room')
+dev('rec', 17.8, 4.458, 'N', 16, '22', 'Living Room')
 dev('tv', 12.146, 7.0, 'E', 54, '22', 'Living Room', 'behind the TV on wall 5')
 dev('data', 12.146, 7.5, 'E', 54, 'data', 'Living Room', 'behind the TV: 2 x Cat6')
 dev('rec', 12.146, 14.6, 'E', 16, '22', 'Living Room')
-dev('rec', 27.854, 5.2, 'W', 16, '22', 'Living Room')
+dev('rec', 29.854, 6.0, 'W', 16, '22', 'Living Room')
 dev('floor', 22.4, 6.75, 'c', 0, '22', 'Living Room', 'floor box behind the sectional, for lamps')
 for x in (15.3, 20.5, 25.2):
     for y in (4.6, 13.0):
         dev('can', x, y, 'c', 108, '25', 'Living Room', leg='living')
-dev('dim', 23.0, 0.458, 'N', 48, '25', 'Living Room', 'front door, latch side of D1: 3-gang (living cans 3-way, porch, garage coach lights)', leg='living')
-dev('sw', 22.6, 0.458, 'N', 48, '25', 'Living Room', 'front door bank', leg='porch')
-dev('sw', 22.2, 0.458, 'N', 48, '26', 'Living Room', 'front door bank', leg='coach')
-dev('sw3', 27.854, 8.6, 'W', 48, '25', 'Living Room', 'living cans, kitchen side', leg='living')
+dev('dim', 23.0, 4.458, 'N', 48, '25', 'Living Room', 'front door, latch side of D1: 3-gang (living cans 3-way, porch, garage coach lights)', leg='living')
+dev('sw', 22.6, 4.458, 'N', 48, '25', 'Living Room', 'front door bank', leg='porch')
+dev('sw', 22.2, 4.458, 'N', 48, '26', 'Living Room', 'front door bank', leg='coach')
+dev('sw3', 29.854, 8.6, 'W', 48, '25', 'Living Room', 'living cans, kitchen side', leg='living')
 dev('combo', 20.5, 9.0, 'c', 108, '24', 'Living Room', 'great room, over 20\' from the range')
 dev('wap', 24.0, 16.5, 'c', 108, 'data', 'Living Room', 'wireless access point, great room')
-dev('bell', 27.0, 0.0, 'S', 48, 'data', 'Exterior', 'video doorbell beside D1')
+dev('bell', 27.0, 4.0, 'S', 48, 'data', 'Exterior', 'video doorbell beside D1')
 # ---- porch and patio
-dev('soffit', 16.5, -3.0, 'c', 108, '25', 'Front Porch', leg='porch')
-dev('soffit', 23.5, -3.0, 'c', 108, '25', 'Front Porch', leg='porch')
-dev('ext', 27.2, 0.0, 'S', 72, '25', 'Front Porch', 'beside the front door', leg='porch')
-dev('wp', 13.2, 0.0, 'S', 16, '29', 'Front Porch')
-dev('soffit', 16.0, 45.0, 'c', 108, '25', 'Rear Patio', leg='patio')
-dev('soffit', 23.0, 45.0, 'c', 108, '25', 'Rear Patio', leg='patio')
+dev('soffit', 16.5, 1.0, 'c', 108, '25', 'Front Porch', leg='porch')
+dev('soffit', 23.5, 1.0, 'c', 108, '25', 'Front Porch', leg='porch')
+dev('ext', 27.2, 4.0, 'S', 72, '25', 'Front Porch', 'beside the front door', leg='porch')
+dev('wp', 13.2, 4.0, 'S', 16, '29', 'Front Porch')
+dev('soffit', 16.0, 41.0, 'c', 108, '25', 'Rear Patio', leg='patio')
+dev('soffit', 21.0, 41.0, 'c', 108, '25', 'Rear Patio', leg='patio')
 dev('wp', 24.0, 40.0, 'N', 16, '29', 'Rear Patio')
 dev('ext', 38.0, 0.0, 'S', 84, '26', 'Exterior', 'coach light, west of the garage door', leg='coach')
 dev('ext', 56.0, 0.0, 'S', 84, '26', 'Exterior', 'coach light, east of the garage door', leg='coach')
 # ---- dining
 dev('rec', 12.146, 25.8, 'E', 16, '23', 'Dining')
 dev('rec', 12.146, 35.0, 'E', 16, '23', 'Dining')
-dev('rec', 14.3, 39.542, 'S', 16, '23', 'Dining')
+dev('rec', 21.6, 35.542, 'S', 16, '23', 'Dining')
 dev('chand', 17.5, 29.5, 'c', 96, '25', 'Dining', 'over the table centre', leg='dining')
 dev('dim', 12.146, 22.0, 'E', 48, '25', 'Dining', 'north of the cased opening', leg='dining')
-dev('sw', 15.9, 39.542, 'S', 48, '25', 'Dining', 'beside D2', leg='patio')
+dev('sw', 13.6, 35.542, 'S', 48, '25', 'Dining', 'beside D2', leg='patio')
 # ---- kitchen
 dev('gfci', 23.8, 39.542, 'S', 44, '11', 'Kitchen', 'rear run')
 dev('gfci', 27.5, 39.542, 'S', 44, '11', 'Kitchen', 'rear run, east of the window')
@@ -194,7 +194,7 @@ dev('can', 31.2, 16.6, 'c', 108, '25', 'Back Hall', leg='backhall')
 dev('can', 35.0, 21.0, 'c', 108, '25', 'Back Hall', leg='backhall')
 dev('sw3', 35.854, 19.0, 'W', 48, '25', 'Back Hall', 'latch side of D3: 2-gang with the garage lights', leg='backhall')
 dev('sw3', 35.854, 18.6, 'W', 48, '26', 'Back Hall', 'garage lights, house side', leg='garage')
-dev('sw3', 32.6, 10.146, 'N', 48, '25', 'Back Hall', 'by D11', leg='backhall')
+dev('sw3', 33.4, 10.146, 'N', 48, '25', 'Back Hall', 'by D11', leg='backhall')
 dev('rec', 35.854, 14.0, 'W', 16, '23', 'Back Hall')
 dev('combo', 35.0, 22.4, 'c', 108, '24', 'Back Hall', 'by the garage door and the primary suite')
 dev('chime', 34.4, 10.146, 'N', 84, 'data', 'Back Hall')
@@ -203,7 +203,7 @@ dev('gfci', 35.854, 2.25, 'W', 42, '16', 'Mud / Laundry', 'washer, beside the wa
 dev('r240', 35.854, 4.85, 'W', 30, '3-4', 'Mud / Laundry', 'dryer, NEMA 14-30R')
 dev('gfci', 31.5, 0.458, 'N', 42, '16', 'Mud / Laundry', 'over the bench')
 dev('surf', 32.0, 5.0, 'c', 108, '25', 'Mud / Laundry', leg='laundry')
-dev('sw', 32.0, 9.854, 'S', 48, '25', 'Mud / Laundry', 'latch side of D11', leg='laundry')
+dev('sw', 33.4, 9.854, 'S', 48, '25', 'Mud / Laundry', 'latch side of D11', leg='laundry')
 # ---- primary bedroom
 dev('usb', 47.854, 27.6, 'W', 16, '21', 'Primary Bedroom', 'nightstand, south side of the bed')
 dev('usb', 47.854, 38.4, 'W', 16, '21', 'Primary Bedroom', 'nightstand, north side of the bed')
@@ -299,7 +299,7 @@ PFIX = [
     dict(id='F10', name='Primary shower', kind='shower', x=55.54, y=31.6, dfu=2, trap='2"', hot=True, cold=True, vent='V2', h=48, note='centre drain, PVC liner or a foam pan; valve on wall 17 at 48", head at 80"'),
     dict(id='F11', name='Primary toilet', kind='wc', x=56.542, y=25.75, dfu=3, trap='3"', hot=False, cold=True, vent='V2', h=8, note='1.28 gpf, 12" rough from the east wall; supply up through the slab'),
     dict(id='F12', name='Water heater', kind='wh', x=56.6, y=22.5, dfu=0, trap='—', hot=True, cold=True, vent='—', h=0, note='50 gal gas, power direct vent (sealed combustion, 2-pipe PVC through the roof), on an 18" stand in the garage (G2408.2), thermal expansion tank, T&P discharge to within 6" of the garage floor, in a drain pan'),
-    dict(id='F13', name='Hose bib, front', kind='hb', x=33.6, y=0.458, dfu=0, trap='—', hot=False, cold=True, vent='—', h=24, note='frost-free sillcock through wall 1 from the laundry, vacuum breaker'),
+    dict(id='F13', name='Hose bib, front', kind='hb', x=33.6, y=0.458, dfu=0, trap='—', hot=False, cold=True, vent='—', h=24, note='frost-free sillcock through wall 25 from the laundry, vacuum breaker'),
     dict(id='F14', name='Hose bib, rear', kind='hb', x=27.2, y=39.542, dfu=0, trap='—', hot=False, cold=True, vent='—', h=24, note='frost-free sillcock through wall 3 from the rear counter base, vacuum breaker'),
 ]
 # drains under the slab: (size, points, note)
@@ -372,9 +372,9 @@ REGISTERS = [
     ('G1', 'Bedroom 3', 6.0, 9.4, 100, '7"', (10.0, 14.0)),
     ('G2', 'Bath 2', 3.6, 19.4, 50, '6"', (10.0, 19.4)),
     ('G3', 'Bedroom 2', 6.0, 37.4, 100, '7"', (10.0, 26.0)),
-    ('G4', 'Living Room', 15.3, 2.8, 100, '7"', (15.3, 14.0)),
-    ('G5', 'Living Room', 24.0, 2.8, 100, '7"', (24.0, 14.0)),
-    ('G6', 'Dining', 17.5, 37.6, 120, '8"', (29.0, 30.5)),
+    ('G4', 'Living Room', 15.3, 6.8, 100, '7"', (15.3, 14.0)),
+    ('G5', 'Living Room', 24.0, 6.8, 100, '7"', (24.0, 14.0)),
+    ('G6', 'Dining', 17.5, 33.6, 120, '8"', (29.0, 30.5)),
     ('G7', 'Kitchen', 26.0, 35.4, 130, '8"', (29.0, 30.5)),
     ('G8', 'Mud / Laundry', 31.6, 4.4, 50, '6"', (28.8, 12.25)),
     ('G9', 'Primary Bedroom', 39.0, 37.8, 80, '7"', (39.0, 30.5)),

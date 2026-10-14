@@ -10,11 +10,12 @@ Source: BuildWise LLC plan 3933 (3 bed, 2 bath, 1,800 sq ft conditioned, 528 sq 
 """
 
 W, D = 58.0, 40.0                 # overall framing, west-east x south-north
+PF, PR = 4.0, 36.0                # outside face of the wall behind the front porch / the rear patio
 T_EXT, T_INT = 5.5 / 12, 3.5 / 12
 C = T_EXT / 2                     # exterior wall centre line, in from the outside face
 CEIL = 9.0                        # flat ceiling throughout, garage included
 PLATE_H = 9.0 + 1.125 / 12        # 104-5/8" precut studs + 3 plates
-PITCH = 6 / 12                    # 6:12 simple gable, ridge east-west on the centre line
+PITCH = 6 / 12                    # 6:12 gable, ridge east-west on the centre line, two front gables (ROOF below)
 OVERHANG = 1.0
 DOOR_H = 80 / 12                  # interior doors 6'-8"
 HEAD = 8.0                        # window and exterior door heads
@@ -26,18 +27,18 @@ HEAD = 8.0                        # window and exterior door heads
 #   G  garage separation 2x4 @ 16", insulated, 1/2" gypsum on the garage side (IRC R302.6)
 #   M  mechanical room in the garage, 2x4 @ 16", gypsum both sides
 WALLS = [
-    (1, 0, C, W, C, 'E', 'front (south) exterior wall; bears the roof trusses'),
+    (1, 0, C, 12 + C, C, 'E', 'front exterior wall, Bedroom 3; bears the roof trusses'),
     (2, W - C, 0, W - C, D, 'E', 'east exterior wall (gable end)'),
-    (3, 0, D - C, W, D - C, 'E', 'rear (north) exterior wall; bears the roof trusses'),
+    (3, 23 - C, D - C, W, D - C, 'E', 'rear exterior wall, kitchen and primary suite; bears the roof trusses'),
     (4, C, 0, C, D, 'E', 'west exterior wall (gable end)'),
-    (5, 12, C, 12, D - C, 'P', 'bedroom wing / great room'),
+    (5, 12, PF + C, 12, PR - C, 'P', 'bedroom wing / great room'),
     (6, C, 12.5, 12, 12.5, 'P', 'Bedroom 3 / its closet and the hall'),
     (7, C, 15, 8, 15, 'P', 'Bedroom 3 closet / Bath 2'),
     (8, 8, 12.5, 8, 28, 'P', 'closets and Bath 2 / hall'),
     (9, C, 25.5, 8, 25.5, 'P', 'Bath 2 / Bedroom 2 closet'),
     (10, C, 28, 12, 28, 'P', 'Bedroom 2 / its closet and the hall'),
-    (11, 28, C, 28, 10, 'P', 'living room / mud-laundry'),
-    (12, 28, 10, 36, 10, 'P', 'mud-laundry / back hall'),
+    (11, 30, PF + C, 30, 10, 'P', 'living room / mud-laundry'),
+    (12, 30, 10, 36, 10, 'P', 'mud-laundry / back hall'),
     (13, 36, C, 36, 24, 'G', 'house / garage'),
     (14, 34, 24, W - C, 24, 'G', 'primary suite / garage and back hall'),
     (15, 34, 24, 34, D - C, 'P', 'primary bedroom / kitchen and pantry'),
@@ -47,7 +48,43 @@ WALLS = [
     (19, 28, 35, 34, 35, 'P', 'pantry / kitchen'),
     (20, 52, 18, 52, 24, 'M', 'mechanical room / garage'),
     (21, 52, 18, W - C, 18, 'M', 'mechanical room / garage'),
+    # the porch and patio are set into the house: the walls step in around them
+    (22, 12, 0, 12, PF + C, 'E', 'porch west return, Bedroom 3 / front porch'),
+    (23, 12 - C, PF + C, 30 + C, PF + C, 'E', 'front wall behind the porch, living room; bears the roof trusses'),
+    (24, 30, 0, 30, PF + C, 'E', 'porch east return, mud-laundry / front porch'),
+    (25, 30 - C, C, W, C, 'E', 'front exterior wall, mud-laundry and garage; bears the roof trusses'),
+    (26, 0, D - C, 12 + C, D - C, 'E', 'rear exterior wall, Bedroom 2; bears the roof trusses'),
+    (27, 12, PR - C, 12, D, 'E', 'patio west return, Bedroom 2 / rear patio'),
+    (28, 12 - C, PR - C, 23 + C, PR - C, 'E', 'rear wall behind the patio, dining; bears the roof trusses'),
+    (29, 23, PR - C, 23, D, 'E', 'patio east return, kitchen / rear patio'),
 ]
+# outside face of the framing, counter-clockwise from the south-west corner
+FOOTPRINT = [(0, 0), (12 + C, 0), (12 + C, PF), (30 - C, PF), (30 - C, 0), (W, 0), (W, D), (23 + C, D), (23 + C, PR), (12 - C, PR), (12 - C, D), (0, D)]
+
+
+def inside(x, y):
+    """point in the footprint (ray casting)"""
+    c = False
+    for (x1, y1), (x2, y2) in zip(FOOTPRINT, FOOTPRINT[1:] + FOOTPRINT[:1]):
+        if (y1 > y) != (y2 > y) and x < x1 + (y - y1) * (x2 - x1) / (y2 - y1):
+            c = not c
+    return c
+
+
+def out_dir(w):
+    """for an exterior wall, which way its outside faces along its normal: -1 (south / west) or +1 (north / east)"""
+    n, x1, y1, x2, y2, typ, _ = w
+    mx, my = (x1 + x2) / 2, (y1 + y2) / 2
+    if abs(y1 - y2) < 1e-6:
+        return -1 if inside(mx, my + 1) else 1
+    return -1 if inside(mx + 1, my) else 1
+
+
+EXT_RUNS = {1: 'east–west, the front of Bedroom 3', 2: 'north–south, the east gable end', 3: 'east–west, the rear of the kitchen and primary suite',
+            4: 'north–south, the west gable end', 22: 'north–south, the west side of the porch', 23: 'east–west, behind the porch',
+            24: 'north–south, the east side of the porch', 25: 'east–west, the front of the laundry and garage', 26: 'east–west, the rear of Bedroom 2',
+            27: 'north–south, the west side of the patio', 28: 'east–west, behind the patio', 29: 'north–south, the east side of the patio'}
+
 THICK = {'E': T_EXT, 'P': T_INT, 'G': T_INT, 'M': T_INT}
 
 
@@ -64,17 +101,17 @@ def along_x(w):
 # height (ft), kind, room it serves, hinge end ('lo' = west/south end), swing side ('+' = toward +y/+x), note
 #   kind: swing | pair (two leaves) | bifold | overhead | cased (no door)
 DOORS = [
-    ('D1', 1, 25.0, 3.0, HEAD, 'swing', 'Front entry', 'hi', '+', 'insulated fiberglass, 3\'-0" x 8\'-0", lever and deadbolt; threshold flush with the porch'),
-    ('D2', 3, 19.5, 6.0, HEAD, 'pair', 'Dining', 'lo', '-', 'French doors to the rear patio, 6\'-0" x 8\'-0" pair, one active leaf, low-E glass'),
+    ('D1', 23, 25.0, 3.0, HEAD, 'swing', 'Front entry', 'hi', '+', 'insulated fiberglass, 3\'-0" x 8\'-0", lever and deadbolt; threshold flush with the porch'),
+    ('D2', 28, 17.5, 6.0, HEAD, 'pair', 'Dining', 'lo', '-', 'French doors to the rear patio, 6\'-0" x 8\'-0" pair, one active leaf, low-E glass'),
     ('D3', 13, 21.0, 3.0, DOOR_H, 'swing', 'Back hall', 'hi', '-', 'house to garage: 20-minute rated, solid core, self-closing (IRC R302.5.1); 1-step down to the garage slab'),
-    ('D4', 1, 47.0, 16.0, 8.0, 'overhead', 'Garage', 'lo', '+', '16\'-0" x 8\'-0" insulated overhead door with opener'),
+    ('D4', 25, 47.0, 16.0, 8.0, 'overhead', 'Garage', 'lo', '+', '16\'-0" x 8\'-0" insulated overhead door with opener'),
     ('D5', 2, 9.0, 3.0, DOOR_H, 'swing', 'Garage', 'lo', '-', 'garage service door, steel, 3\'-0" x 6\'-8"'),
     ('D6', 6, 10.0, 2 + 8 / 12, DOOR_H, 'swing', 'Bedroom 3', 'hi', '-', ''),
     ('D7', 6, 4.2, 5.0, DOOR_H, 'bifold', 'Bedroom 3 closet', 'lo', '-', '2 pair of 2\'-6" bifolds'),
     ('D8', 8, 20.25, 2 + 8 / 12, DOOR_H, 'swing', 'Bath 2', 'lo', '-', 'privacy lock'),
     ('D9', 10, 4.2, 5.0, DOOR_H, 'bifold', 'Bedroom 2 closet', 'lo', '+', '2 pair of 2\'-6" bifolds'),
     ('D10', 10, 10.0, 2 + 8 / 12, DOOR_H, 'swing', 'Bedroom 2', 'hi', '+', ''),
-    ('D11', 12, 30.25, 2 + 8 / 12, DOOR_H, 'swing', 'Mud / laundry', 'lo', '-', ''),
+    ('D11', 12, 31.6, 2 + 8 / 12, DOOR_H, 'swing', 'Mud / laundry', 'lo', '-', ''),
     ('D12', 15, 25.9, 2 + 8 / 12, DOOR_H, 'swing', 'Primary bedroom', 'lo', '+', ''),
     ('D13', 16, 25.9, 2 + 8 / 12, DOOR_H, 'swing', 'Primary bath', 'lo', '+', 'privacy lock'),
     ('D14', 17, 51.4, 2.5, DOOR_H, 'swing', 'WIC', 'lo', '+', ''),
@@ -87,12 +124,12 @@ DOORS = [
 # tag, wall, centre along the wall, width, height, sill, room, type
 WINDOWS = [
     ('N1', 1, 6.0, 3.0, 5.0, 3.0, 'Bedroom 3', 'single hung, egress'),
-    ('N2', 1, 14.0, 3.0, 5.0, 3.0, 'Living room', 'single hung'),
-    ('N3', 1, 19.5, 3.0, 5.0, 3.0, 'Living room', 'single hung'),
+    ('N2', 23, 15.0, 3.0, 5.0, 3.0, 'Living room', 'single hung'),
+    ('N3', 23, 20.0, 3.0, 5.0, 3.0, 'Living room', 'single hung'),
     ('N4', 4, 10.1, 3.0, 5.0, 3.0, 'Bedroom 3', 'single hung, egress'),
     ('N5', 4, 21.0, 2.0, 3.0, 5.0, 'Bath 2', 'single hung, obscure glass'),
     ('N6', 4, 37.6, 3.0, 5.0, 3.0, 'Bedroom 2', 'single hung, egress'),
-    ('N7', 3, 6.0, 3.0, 5.0, 3.0, 'Bedroom 2', 'single hung, egress'),
+    ('N7', 26, 6.0, 3.0, 5.0, 3.0, 'Bedroom 2', 'single hung, egress'),
     ('N8', 3, 25.75, 3.0, 4.0, 4.0, 'Kitchen', 'single hung, over the rear counter'),
     ('N9', 3, 41.0, 3.0, 5.0, 3.0, 'Primary bedroom', 'single hung, egress'),
     ('N10', 2, 26.0, 2.0, 3.0, 5.0, 'Primary bath', 'single hung, obscure glass'),
@@ -109,12 +146,12 @@ ROOMS = [
     ('Closet', 0, 8, 25.5, 28, 'serv', ''),
     ('Bedroom 2', 0, 12, 28, 40, 'bed', ''),
     ('Hall', 8, 12, 12.5, 28, 'circ', ''),
-    ('Living Room', 12, 28, 0, 18, 'live', 'N'),
-    ('Dining', 12, 23, 18, 40, 'live', 'SE'),
+    ('Living Room', 12, 30, PF + C, 18, 'live', 'N'),
+    ('Dining', 12, 23, 18, PR - C, 'live', 'SE'),
     ('Kitchen', 23, 34, 18, 40, 'live', 'SW'),
     ('Pantry', 28, 34, 35, 40, 'serv', ''),
-    ('Mud / Laundry', 28, 36, 0, 10, 'wet', ''),
-    ('Back Hall', 28, 36, 10, 18, 'circ', 'WN'),
+    ('Mud / Laundry', 30, 36, 0, 10, 'wet', ''),
+    ('Back Hall', 30, 36, 10, 18, 'circ', 'WN'),
     ('Back Hall', 34, 36, 18, 24, 'circ', 'W'),
     ('Primary Bedroom', 34, 48, 24, 40, 'bed', ''),
     ('Primary Bath', 48, 58, 24, 34, 'wet', ''),
@@ -123,17 +160,26 @@ ROOMS = [
     ('Mech Room', 52, 58, 18, 24, 'serv', ''),
 ]
 OUTDOOR = [
-    ('Front Porch', 12, 30, -6, 0, '6\' x 18\' concrete, under its own shed roof on 6x6 posts'),
-    ('Rear Patio', 12.5, 26.5, 40, 50, '10\' x 14\' concrete, covered, on 6x6 posts'),
+    ('Front Porch', 12 + C, 30 - C, PF - 6, PF, '6\' x 17\'-6" concrete, set 4\' into the house under the porch gable, 6x6 posts at the front'),
+    ('Rear Patio', 12 + C, 23 - C, PR, PR + 10, '10\' x 10\'-6" concrete, set 4\' into the house, the rest under a shed roof on 6x6 posts'),
     ('Driveway', 37, 57, -14, 0, 'concrete apron to the garage door'),
 ]
+# roof: 6:12 gable over the whole 58' x 40', ridge east-west, with two front-facing gables whose ridges run north
+# to where they die into the main roof. a, b: the gable's wall lines (x); front: its front face (y)
+GABLES = [
+    dict(id='CG1', name='Porch gable', a=12.0, b=30.0, front=PF - 6),
+    dict(id='CG2', name='Garage gable', a=36.0, b=W, front=0.0),
+]
+# 6x6 posts: (x, y, which)
+POSTS = [(12.6, PF - 5.6, 'porch'), (18.2, PF - 5.6, 'porch'), (23.8, PF - 5.6, 'porch'), (29.4, PF - 5.6, 'porch'),
+         (12.6, PR + 9.6, 'patio'), (17.5, PR + 9.6, 'patio'), (22.4, PR + 9.6, 'patio')]
 # room name labels: (text, x, y, size)
 LABELS = [
     ('Bedroom 3', 6.0, 10.6, 9), ('Closet', 4.2, 13.75, 7), ('Bath 2', 4.6, 23.4, 9), ('Closet', 4.2, 26.75, 7),
-    ('Bedroom 2', 6.6, 29.6, 9), ('Hall', 10.0, 24.6, 8), ('Living Room', 16.0, 15.6, 10), ('Dining', 15.0, 37.0, 10),
-    ('Kitchen', 30.7, 22.0, 10), ('Pantry', 31.0, 38.6, 8), ('Mud / Laundry', 31.2, 8.2, 9), ('Back Hall', 32.0, 15.0, 8),
+    ('Bedroom 2', 6.6, 29.6, 9), ('Hall', 10.0, 24.6, 8), ('Living Room', 16.0, 16.2, 10), ('Dining', 15.0, 33.4, 10),
+    ('Kitchen', 30.7, 22.0, 10), ('Pantry', 31.0, 38.6, 8), ('Mud / Laundry', 33.0, 8.2, 8), ('Back Hall', 33.0, 15.0, 8),
     ('Primary Bedroom', 40.0, 37.6, 10), ('Primary Bath', 51.4, 33.0, 9), ('WIC', 55.5, 36.7, 9), ('Garage', 44.5, 21.4, 11),
-    ('Mech Room', 55.0, 23.2, 8), ('Front Porch', 18.0, -3.0, 9), ('Rear Patio', 19.5, 47.5, 9),
+    ('Mech Room', 55.0, 23.2, 8), ('Front Porch', 21.0, 0.6, 9), ('Rear Patio', 17.5, 43.0, 9),
 ]
 
 
@@ -144,7 +190,9 @@ def face(v, lo_side, axis):
         return T_EXT
     if v >= top - 0.01:
         return top - T_EXT
-    return v + (T_INT / 2 if lo_side else -T_INT / 2)
+    on = [w[5] for w in WALLS if along_x(w) == (axis == 'y') and abs((w[2] if axis == 'y' else w[1]) - v) < 0.01]
+    t = T_EXT if on and all(k == 'E' for k in on) else T_INT
+    return v + (t / 2 if lo_side else -t / 2)
 
 
 def clear(r):
@@ -163,7 +211,7 @@ FIXTURES = [
     ('bed', F, F + 6.67, 3.5, 8.5, 'E', 'Queen bed', ''),
     ('nightstand', F, F + 1.5, 1.8, 3.3, 'E', 'Nightstand', ''),
     ('nightstand', F, F + 1.5, 8.7, 10.2, 'E', 'Nightstand', ''),
-    ('dresser', 9.0, 11.85, F, F + 1.5, 'N', 'Dresser', ''),
+    ('dresser', 8.9, 11.75, F, F + 1.5, 'N', 'Dresser', ''),
     # Bath 2: tub across the south wall, linen tower beside it, toilet on the west wall, vanity on the north wall
     ('tub', 2.854, 7.854, 15.146, 17.646, 'N', 'Tub / shower', '60" x 30" alcove tub with shower, tile surround; drain and valve at the east end, on wall 8'),
     ('linen', F, 2.704, 15.146, 16.646, 'N', 'Linen', 'linen cabinet, floor to 84"'),
@@ -173,27 +221,27 @@ FIXTURES = [
     ('bed', F, F + 6.67, 30.5, 35.5, 'E', 'Queen bed', ''),
     ('nightstand', F, F + 1.5, 28.8, 30.3, 'E', 'Nightstand', ''),
     ('nightstand', F, F + 1.5, 35.7, 37.2, 'E', 'Nightstand', ''),
-    ('dresser', 9.0, 11.85, 38.04, 39.542, 'S', 'Dresser', ''),
+    ('dresser', 8.9, 11.75, 38.04, 39.542, 'S', 'Dresser', ''),
     # Living room: TV on wall 5, L-sectional facing it, coffee table
-    ('tv', 12.146, 12.4, 5.0, 9.0, 'E', 'TV', '65" TV on wall 5'),
-    ('sofa', 19.0, 22.0, 2.5, 11.0, 'W', 'Sectional', ''),
-    ('sofa', 15.5, 19.0, 8.0, 11.0, 'S', 'Sectional return', ''),
-    ('coffee', 15.0, 17.5, 3.5, 7.0, 'N', 'Coffee table', ''),
+    ('tv', 12.146, 12.4, 9.0, 13.0, 'E', 'TV', '65" TV on wall 5'),
+    ('sofa', 19.0, 22.0, 6.5, 15.0, 'W', 'Sectional', ''),
+    ('sofa', 15.5, 19.0, 12.0, 15.0, 'S', 'Sectional return', ''),
+    ('coffee', 15.0, 17.5, 7.5, 11.0, 'N', 'Coffee table', ''),
     # Dining: 3'-6" x 7' table, 8 seats
-    ('table', 15.75, 19.25, 26.0, 33.0, 'N', 'Dining table', ''),
+    ('table', 15.75, 19.25, 23.0, 30.0, 'N', 'Dining table', ''),
     # Kitchen
     ('island', 24.5, 28.0, 25.5, 32.0, 'W', 'Island', 'sink and dishwasher, seating on the dining side'),
     ('counter', 31.854, 33.854, 27.8, 35.0, 'W', 'Counter', 'wall run on wall 15: range between base cabinets, uppers above'),
     ('range', 31.854, 33.854, 29.75, 32.25, 'W', 'Range', '30" gas range, ducted hood above'),
     ('fridge', 28.3, 31.3, 32.354, 34.854, 'S', 'Refrigerator', '36" refrigerator, ice maker'),
-    ('counter', 23.0, 27.854, 37.542, 39.542, 'S', 'Counter', 'rear run under the window, uppers either side'),
+    ('counter', 23.229, 27.854, 37.542, 39.542, 'S', 'Counter', 'rear run under the window, uppers either side'),
     ('shelves', 28.146, 33.854, 38.042, 39.542, 'S', 'Pantry shelves', ''),
     ('shelves', 32.354, 33.854, 35.146, 38.042, 'W', 'Pantry shelves', ''),
     # Mud / laundry: washer and dryer on wall 13, bench and hooks on wall 11, linen tower
     ('washer', 33.354, 35.854, 1.0, 3.5, 'W', 'Washer', 'front load'),
     ('dryer', 33.354, 35.854, 3.6, 6.1, 'W', 'Dryer', 'front load, 30A 240V'),
     ('linen', 33.854, 35.854, 7.4, 9.854, 'W', 'Linen', 'linen / broom cabinet'),
-    ('bench', 28.146, 29.646, 1.0, 6.0, 'E', 'Mud bench', 'bench with hooks above'),
+    ('bench', 30.229, 31.729, 1.0, 6.0, 'E', 'Mud bench', 'bench with hooks above'),
     # Primary bedroom: king, headboard on wall 16
     ('bed', 41.2, 47.854, 29.8, 36.13, 'W', 'King bed', ''),
     ('nightstand', 46.354, 47.854, 28.0, 29.5, 'W', 'Nightstand', ''),
