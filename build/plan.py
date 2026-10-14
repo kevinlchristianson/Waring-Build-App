@@ -210,7 +210,7 @@ FIXTURES = [
     # Garage: two cars, attic pull-down stair
     ('car', 38.2, 44.6, 2.0, 18.0, 'S', 'Car', ''),
     ('car', 46.0, 52.4, 1.5, 17.0, 'S', 'Car', ''),
-    ('stair', 40.0, 41.83, 19.0, 23.5, 'N', 'Attic access', '22" x 54" insulated pull-down attic stair; the way to AH-1'),
+    ('stair', 40.0, 41.83, 19.0, 23.5, 'N', 'Attic access', '22" x 54" insulated pull-down attic stair; the way to FAU-1'),
     # Mechanical room
     ('wh', 55.6, 57.6, 21.5, 23.5, 'W', 'Water heater', '50 gal electric, in a drain pan, on a stand'),
 ]

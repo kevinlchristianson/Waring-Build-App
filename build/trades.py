@@ -8,8 +8,8 @@ CIRCUITS = [
     ('1-2', 'Range', '240V 50A 2P', '#6 Cu NM', 'kitchen, wall 15'),
     ('3-4', 'Dryer', '240V 30A 2P', '#10 Cu NM (4-wire)', 'mud / laundry'),
     ('5-6', 'Water heater', '240V 30A 2P', '#10 Cu NM', 'mechanical room'),
-    ('7-8', 'Heat pump HP-1 (outdoor unit)', '240V 30A 2P (per nameplate MOCP)', '#10 Cu', 'east wall, disconnect at the unit'),
-    ('9-10', 'Air handler AH-1 with 10 kW heat strips', '240V 60A 2P (per nameplate MOCP)', '#6 Cu', 'attic, disconnect at the unit'),
+    ('7-8', 'Air conditioner AC-1 (outdoor unit)', '240V 25A 2P (per nameplate MOCP)', '#10 Cu', 'east wall, disconnect at the unit'),
+    ('9', 'Gas furnace FAU-1 (blower, inducer, controls)', '120V 15A', '#14 Cu', 'attic, service switch at the unit; space 10 left spare'),
     ('11', 'Kitchen small appliance 1', '20A AFCI/GFCI', '#12 Cu', 'kitchen counters: rear run, wall run south'),
     ('12', 'Kitchen small appliance 2', '20A AFCI/GFCI', '#12 Cu', 'kitchen counters: wall run north, island'),
     ('13', 'Dishwasher', '20A AFCI/GFCI', '#12 Cu', 'island'),
@@ -28,7 +28,7 @@ CIRCUITS = [
     ('26', 'Lighting, primary suite and garage', '15A AFCI', '#14 Cu', 'primary suite, garage, mechanical room, attic, garage coach lights'),
     ('27', 'Garage receptacles', '20A GFCI', '#12 Cu', 'garage, attic service receptacle (210.11(C)(4), 210.63)'),
     ('28', 'Garage door opener', '20A GFCI', '#12 Cu', 'opener receptacle in the garage ceiling'),
-    ('29', 'Exterior receptacles', '20A GFCI', '#12 Cu', 'porch, patio, HP-1 service receptacle (210.63)'),
+    ('29', 'Exterior receptacles', '20A GFCI', '#12 Cu', 'porch, patio, AC-1 service receptacle (210.63)'),
 ]
 # device types: what each draws as on E-1, and its bill-of-materials line
 DEV = {
@@ -70,7 +70,7 @@ DEV = {
     'disc': 'AC disconnect, fused / non-fused per nameplate',
     'jbox': 'junction box, hardwired appliance',
     'opener': 'ceiling receptacle for the garage door opener, 20A GFCI',
-    'attic': 'attic light at the air handler, switched at the access with a pilot light (M1305.1.3.1)',
+    'attic': 'attic light at the furnace, switched at the access with a pilot light (M1305.1.3.1)',
 }
 LETTER = {'rec': 'R', 'usb': 'R', 'rec20': 'R', 'gfci': 'R', 'wp': 'R', 'ded': 'R', 'r240': 'R', 'floor': 'R', 'tv': 'R', 'opener': 'R', 'jbox': 'R',
           'sw': 'S', 'sw3': 'S', 'dim': 'S', 'fansw': 'S', 'tmr': 'S',
@@ -92,9 +92,9 @@ dev('media', 57.542, 19.6, 'W', 60, 'data', 'Mech Room', 'Structured media enclo
 dev('jbox', 57.542, 22.5, 'W', 48, '5-6', 'Mech Room', 'Water heater: hardwired from a box on wall 2, disconnect within sight')
 dev('surf', 54.9, 20.5, 'c', 108, '26', 'Mech Room', leg='mech')
 dev('sw', 56.3, 18.146, 'N', 48, '26', 'Mech Room', 'inside, latch side of D16', leg='mech')
-# ---- outside the east wall: heat pump
-dev('disc', 58.0, 20.4, 'E', 48, '7-8', 'Exterior', 'HP-1 disconnect on the east wall, within sight of the unit')
-dev('wp', 58.0, 22.3, 'E', 24, '29', 'Exterior', 'service receptacle within 25\' of HP-1 (210.63)')
+# ---- outside the east wall: air conditioner
+dev('disc', 58.0, 20.4, 'E', 48, '7-8', 'Exterior', 'AC-1 disconnect on the east wall, within sight of the unit')
+dev('wp', 58.0, 22.3, 'E', 24, '29', 'Exterior', 'service receptacle within 25\' of AC-1 (210.63)')
 # ---- Bedroom 3
 dev('usb', 0.458, 2.55, 'E', 16, '19', 'Bedroom 3', 'nightstand, south side of the bed')
 dev('usb', 0.458, 9.45, 'E', 16, '19', 'Bedroom 3', 'nightstand, north side of the bed')
@@ -243,9 +243,9 @@ for x, y in ((41.0, 7.0), (41.0, 14.5), (50.5, 7.0), (50.5, 13.0)):
 dev('sw3', 36.146, 18.9, 'E', 48, '26', 'Garage', 'garage side of D3', leg='garage')
 dev('sw3', 57.542, 11.0, 'W', 48, '26', 'Garage', 'latch side of D5', leg='garage')
 dev('sw', 43.0, 23.854, 'S', 54, '26', 'Garage', 'by the attic stair, with a pilot light', leg='attic')
-dev('attic', 31.6, 12.0, 'c', 120, '26', 'Attic', 'at AH-1, on the service platform', leg='attic')
-dev('gfci', 33.0, 12.0, 'c', 120, '27', 'Attic', 'service receptacle at AH-1 (210.63)')
-dev('disc', 29.2, 13.0, 'c', 120, '9-10', 'Attic', 'AH-1 disconnect at the unit')
+dev('attic', 31.6, 12.0, 'c', 120, '26', 'Attic', 'at FAU-1, on the service platform', leg='attic')
+dev('gfci', 33.0, 12.0, 'c', 120, '27', 'Attic', 'service receptacle at FAU-1 (210.63)')
+dev('disc', 29.2, 13.0, 'c', 120, '9', 'Attic', 'FAU-1 service switch at the unit (toggle disconnect, M1305.1.3)')
 
 # give tags: R1.., S1.., L1.., A1.., T1.., X1..
 DEVICES = []
@@ -358,7 +358,7 @@ BRANCHES = [
 
 # ============================================================================ M-1 HVAC
 AH = dict(x1=29.5, x2=34.5, y1=12.75, y2=15.25, h=9.6,
-          note='AH-1: variable-speed air handler with a 2.5-ton cold-climate heat pump coil and 10 kW strips, horizontal on a platform in the attic over the back hall; 30" service platform at the access side, auxiliary drain pan with a float switch')
+          note='FAU-1: 96% AFUE two-stage condensing gas furnace, 60,000 BTU/h input, variable-speed blower, with a 2.5-ton cased A/C coil; listed for attic installation, horizontal on a platform over the back hall; 30" service platform at the access side, auxiliary drain pan with a float switch')
 SUPPLY_PLENUM = (28.5, 29.5, 12.25, 15.75)
 RETURN_PLENUM = (34.5, 35.5, 12.5, 15.5)
 DTRUNKS = [
@@ -383,7 +383,7 @@ REGISTERS = [
     ('G12', 'WIC', 52.4, 37.2, 30, '5"', (52.4, 30.5)),
 ]
 RETURNS = [
-    dict(id='RG1', room='Back Hall', x=34.9, y=14.0, w=20 / 12, l=30 / 12, along_y=True, cfm=650, size='20x30 filter grille, MERV 8', route=[(34.9, 14.0), (35.0, 14.0)], note='central return under AH-1, straight into the return plenum'),
+    dict(id='RG1', room='Back Hall', x=34.9, y=14.0, w=20 / 12, l=30 / 12, along_y=True, cfm=650, size='20x30 filter grille, MERV 8', route=[(34.9, 14.0), (35.0, 14.0)], note='central return under FAU-1, straight into the return plenum'),
     dict(id='RG2', room='Hall', x=10.0, y=21.0, w=16 / 12, l=25 / 12, along_y=True, cfm=350, size='16x25 filter grille, MERV 8', route=[(10.0, 21.0), (10.0, 16.6), (35.0, 16.6), (35.0, 15.5)], note='bedroom-wing return, 14" insulated flex to the return plenum'),
 ]
 JUMPS = [
@@ -398,6 +398,19 @@ EXHAUST = [
     dict(id='EF3', name='Range hood', size='6"', pts=[(33.0, 31.0), (33.0, 31.0)], cap='roof cap with damper, rear slope', cfm=300),
     dict(id='EF4', name='Dryer vent', size='4"', pts=[(35.6, 4.85), (35.6, 6.5)], cap='dryer roof cap, front slope; rigid metal, 11\' developed with 2 elbows (M1502.4.5)', cfm=0),
 ]
-HP = dict(x1=58.6, x2=61.4, y1=19.6, y2=22.4, note='HP-1: 2.5-ton cold-climate heat pump on a raised pad (above the snow line), 18" off the east wall')
+HP = dict(x1=58.6, x2=61.4, y1=19.6, y2=22.4, note='AC-1: 2.5-ton air conditioner (condensing unit) on a pad, 18" off the east wall')
 LINESET = [(58.6, 21.0), (57.2, 21.0), (57.2, 20.6), (36.0, 20.6), (34.5, 15.0)]
 CONDENSATE = [(29.6, 12.9), (35.6, 12.9), (35.6, 3.2)]
+
+# Natural gas: meter on the garage east wall, into the garage, along the east wall into the mech room
+# (main shutoff and drip leg there), up into the attic and west over the garage ceiling to FAU-1.
+GAS_METER = dict(x=58.4, y=15.0, note='Gas meter and regulator on the garage east wall, set by the utility; regulator vent 3\' from the AC-1 unit, openings and the dryer exhaust')
+GAS = [
+    dict(id='GS1', size='3/4"', where='wall', pts=[(58.0, 15.0), (57.5, 15.0), (57.5, 18.8)],
+         note='3/4" black steel (or CSST) from the meter, through the east wall and up the garage side of it, protected from vehicles, into the mech room'),
+    dict(id='GS2', size='3/4"', where='riser', pts=[(57.5, 18.8)],
+         note='Main gas shutoff and capped tee for a future range or water heater in the mech room, then up through the garage ceiling (fire-caulked)'),
+    dict(id='GS3', size='1/2"', where='attic', pts=[(57.5, 18.8), (37.2, 18.8), (37.2, 13.0), (34.6, 13.0)],
+         note='1/2" CSST in the attic over the garage ceiling to FAU-1, about 30\', supported every 6\'; bonded with #6 Cu to the electrode system (G2411); shutoff and sediment trap within 6\' of the furnace'),
+]
+FLUE = dict(pts=[(33.0, 15.0), (33.0, 21.6)], note='FAU-1 vent and combustion air: 2" PVC intake and exhaust (direct vent, sealed combustion), up through the rear roof slope with a concentric termination 12" above the roof and the snow line; slope back to the furnace')

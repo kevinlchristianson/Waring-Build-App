@@ -7,6 +7,7 @@ from draw import Paper, base_layers, grid, compass, title_block, room_dims, esc,
 PAPER = lambda: Paper(15, -4.5, 63.0, -9.0, 51.5, 20, 22, 95, 20)
 FONT = 'IBM Plex Sans, Segoe UI, Helvetica, Arial, sans-serif'
 ELEC, FRAM, PLUM, COLD, HOT, VENT, DUCT, RET, BLOCK = '#c8650a', '#b8762a', '#3c3a36', '#2c6aa0', '#c8382b', '#4c8c4a', '#d9822b', '#5b8fc7', '#c2369a'
+GASC = '#c9a000'
 
 
 def svg_open(p, label):
@@ -309,8 +310,8 @@ def s1():
     roof_rows = [
         ('RF1', ['Common trusses', f'{trusses - 2} @ 24" o.c.', '6:12, 40\'-0" clear span bearing on walls 1 and 3; interior walls are non-bearing, held 1/2" below the bottom chord with partition clips']),
         ('RF2', ['Gable ends', '2', 'east and west, sheathed, 12" rake overhang on outlookers']),
-        ('RF3', ['Attic access', '1', '22" x 54" insulated pull-down stair in the garage ceiling (F, near wall 14); the way to AH-1']),
-        ('RF4', ['AH-1 platform', '1', '3/4" OSB platform over the back hall, 30" service side, catwalk from the access (M1305.1.3)']),
+        ('RF3', ['Attic access', '1', '22" x 54" insulated pull-down stair in the garage ceiling (F, near wall 14); the way to FAU-1']),
+        ('RF4', ['FAU-1 platform', '1', '3/4" OSB platform over the back hall, 30" service side, catwalk from the access (M1305.1.3)']),
         ('RF5', ['Attic ventilation', '1/300', 'continuous soffit intake, ridge vent; baffles at every bay']),
         ('RF6', ['Ceiling insulation', 'R-60', 'blown cellulose or fibreglass over the house; R-49 minimum over the garage if it is ever heated']),
     ]
@@ -515,7 +516,7 @@ def e1():
     bomrows += [
         ('NM14', ['14/2 NM-B (and 14/3 for 3-ways)', f'{math.ceil(nm14 / 250)} x 250\' rolls', f'about {math.ceil(nm14)}\' from the runs on the circuit sheets, +15%']),
         ('NM12', ['12/2 NM-B', f'{math.ceil(nm12 / 250)} x 250\' rolls', f'about {math.ceil(nm12)}\'']),
-        ('NM6', ['6/3 NM-B (range), 6/2 + ground Cu (AH-1), 10/3 (dryer), 10/2 (water heater, HP-1)', 'by the run', 'measure on site']),
+        ('NM6', ['6/3 NM-B (range), 10/3 (dryer), 10/2 (water heater, AC-1)', 'by the run', 'measure on site']),
         ('BOX', ['Device boxes, new-work, with covers', str(len([d for d in T.DEVICES if d['id'][0] in 'RS']) + 4), 'fan-rated pancake boxes at the fan locations']),
         ('CAT6', ['Cat6 CMR', f'{math.ceil(sum(abs(d["x"] - media["x"]) + abs(d["y"] - media["y"]) + 15 for d in ds) / 1000 + 0.5)} x 1000\' box', 'home runs to the media enclosure']),
     ]
@@ -529,14 +530,14 @@ def e1():
                  'Smoke alarms in every bedroom, smoke/CO alarms outside the bedrooms and at the garage entry, all hardwired, interconnected, with battery backup (R314, R315).',
                  'Circuit sheets E-1.1 onward show one circuit each with its cable run drawn as a chain from MP through every device in nearest-neighbour order (solid for receptacle and appliance circuits, dashed for lighting). The run is a proposed order, not a required one. E-1.D shows the Cat6 home runs to the media enclosure.',
                  'Switch plan: every light belongs to one switch leg (table below). Clicking a light lights up every device on its leg in blue; clicking a leg row does the same.',
-                 'All-electric house assumed: electric range, electric water heater, heat pump with electric strip backup. NEC 220.82 estimate: about 32 kVA, 135A, inside the 200A service.',
+                 'Heat is natural gas (furnace FAU-1 on a 120V 15A circuit); the range, dryer and water heater are drawn electric. NEC 220.82 estimate: about 25 kVA, 105A, inside the 200A service. Bond CSST gas piping to the electrode system with #6 Cu (G2411, NEC 250.104(B)).',
              ]) + '</section>',
              open_items([
-                 'All-electric assumed. If natural gas or propane is coming, the range, water heater and backup heat change, and circuits 1-2, 5-6 and 9-10 shrink.',
+                 'Range, dryer and water heater drawn electric. If any goes gas, its 240V circuit (1-2, 3-4 or 5-6) becomes a 120V receptacle.',
                  'EV charging: add a 240V 50A circuit to the garage now (about $350 rough-in), or leave a spare 2-pole space and conduit?',
                  'Ceiling fans in the three bedrooms drawn on fan-rated boxes. Add one in the living room?',
                  'Data: Cat6 to each bedroom, both TVs and two ceiling access points drawn. Add cameras at the doors or more drops?',
-                 'Heat pump and air handler breakers are placeholders until the HVAC contractor picks the equipment (nameplate MCA / MOCP).',
+                 'A/C and furnace breakers are placeholders until the HVAC contractor picks the equipment (nameplate MCA / MOCP).',
              ]),
              '<section class="wide">', table('Circuit schedule, panel MP', ['Ckt', 'Load', 'Breaker', 'Wire', 'Serves', 'Devices'], crow, '<span class="feed">MP: 200A main breaker load centre, 40 spaces, in the garage mechanical room. Circuit numbers are breaker positions; 2-pole loads take two.</span>'),
              table('Switch plan', ['Leg', 'What', 'Room', 'Switch(es)', 'Lights', 'Control'], legs, 'One row per switch leg. Click a row to light up its switch and lights on the drawing.'),
@@ -663,15 +664,28 @@ def m1():
                 body += p.rect(ax - w / 2, ax + w / 2, min(ay, by), max(ay, by), fill='#f6c99c', stroke=DUCT, stroke_width='0.8', fill_opacity='0.75')
         o.append(sym('m1', t['id'], f'Supply trunk {t["id"]} {t["size"]} in the attic, {ft_in(plen(t["pts"]))} — {t["note"]}', body))
     x1, x2, y1, y2 = T.SUPPLY_PLENUM
-    o.append(sym('m1', 'SP', 'Supply plenum on the AH-1 discharge, sheet metal, R-8', p.rect(x1, x2, y1, y2, fill='#f6c99c', stroke=DUCT, stroke_width='1')))
+    o.append(sym('m1', 'SP', 'Supply plenum on the FAU-1 discharge, sheet metal, R-8', p.rect(x1, x2, y1, y2, fill='#f6c99c', stroke=DUCT, stroke_width='1')))
     x1, x2, y1, y2 = T.RETURN_PLENUM
-    o.append(sym('m1', 'RP', 'Return plenum with the filter rack, on the AH-1 intake', p.rect(x1, x2, y1, y2, fill='#cfe0f2', stroke=RET, stroke_width='1')))
+    o.append(sym('m1', 'RP', 'Return plenum with the filter rack, on the FAU-1 intake', p.rect(x1, x2, y1, y2, fill='#cfe0f2', stroke=RET, stroke_width='1')))
     a = T.AH
-    o.append(sym('m1', 'AH-1', a['note'], p.rect(a['x1'], a['x2'], a['y1'], a['y2'], fill='#fff', stroke='#333', stroke_width='1.3') + p.text((a['x1'] + a['x2']) / 2, (a['y1'] + a['y2']) / 2, 'AH-1 (attic)', 6.5, fill='#333', font_weight='700')))
+    o.append(sym('m1', 'FAU-1', a['note'], p.rect(a['x1'], a['x2'], a['y1'], a['y2'], fill='#fff', stroke='#333', stroke_width='1.3') + p.text((a['x1'] + a['x2']) / 2, (a['y1'] + a['y2']) / 2, 'FAU-1 (attic)', 6.5, fill='#333', font_weight='700')))
     h = T.HP
-    o.append(sym('m1', 'HP-1', h['note'], p.rect(h['x1'], h['x2'], h['y1'], h['y2'], fill='#fff', stroke='#333', stroke_width='1.3') + p.text((h['x1'] + h['x2']) / 2, (h['y1'] + h['y2']) / 2, 'HP-1', 6.5, fill='#333', font_weight='700')))
-    o.append(sym('m1', 'LS', 'Refrigerant line set, insulated, HP-1 to AH-1: through the east wall into the mech room, up into the attic and west over the garage ceiling; 35\' approx.', p.path(T.LINESET, stroke='#7a4fa0', stroke_width='1.3', stroke_dasharray='6,2,1,2')))
-    o.append(sym('m1', 'CD', 'Condensate: 3/4" PVC from AH-1, 1/4"/ft, down wall 13 to the washer standpipe with an air gap; the auxiliary pan has a float switch that stops the unit', p.path(T.CONDENSATE, stroke='#2a9d8f', stroke_width='1.1', stroke_dasharray='3,2')))
+    o.append(sym('m1', 'AC-1', h['note'], p.rect(h['x1'], h['x2'], h['y1'], h['y2'], fill='#fff', stroke='#333', stroke_width='1.3') + p.text((h['x1'] + h['x2']) / 2, (h['y1'] + h['y2']) / 2, 'AC-1', 6.5, fill='#333', font_weight='700')))
+    o.append(sym('m1', 'LS', 'Refrigerant line set, insulated, AC-1 to FAU-1: through the east wall into the mech room, up into the attic and west over the garage ceiling; 35\' approx.', p.path(T.LINESET, stroke='#7a4fa0', stroke_width='1.3', stroke_dasharray='6,2,1,2')))
+    for g in T.GAS:
+        if len(g['pts']) > 1:
+            body = p.path(g['pts'], stroke=GASC, stroke_width='1.4', stroke_dasharray='8,2,2,2')
+        else:
+            X, Y = p.X(g['pts'][0][0]), p.Y(g['pts'][0][1])
+            body = hit(X, Y, 8) + f'<path d="M{r1(X - 4)},{r1(Y - 4)}L{r1(X + 4)},{r1(Y + 4)}M{r1(X - 4)},{r1(Y + 4)}L{r1(X + 4)},{r1(Y - 4)}" stroke="{GASC}" stroke-width="1.6"/><circle cx="{r1(X)}" cy="{r1(Y)}" r="5.5" fill="none" stroke="{GASC}" stroke-width="1"/>'
+        o.append(sym('m1', g['id'], f'Gas {g["id"]}, {g["size"]}: {g["note"]}', body))
+    gm = T.GAS_METER
+    X, Y = p.X(gm['x']), p.Y(gm['y'])
+    o.append(sym('m1', 'GM', gm['note'], hit(X, Y, 9) + f'<rect x="{r1(X - 5)}" y="{r1(Y - 7)}" width="10" height="14" fill="#fff" stroke="{GASC}" stroke-width="1.3"/><text x="{r1(X + 8)}" y="{r1(Y + 2)}" font-size="5.5" font-weight="700" fill="{GASC}">GAS METER</text>'))
+    fl = T.FLUE
+    X, Y = p.X(fl['pts'][-1][0]), p.Y(fl['pts'][-1][1])
+    o.append(sym('m1', 'V1', fl['note'], p.path(fl['pts'], stroke='#555', stroke_width='1.6') + hit(X, Y, 9) + f'<circle cx="{r1(X)}" cy="{r1(Y)}" r="4.5" fill="#fff" stroke="#555" stroke-width="1.4"/><circle cx="{r1(X)}" cy="{r1(Y)}" r="2" fill="#555"/><text x="{r1(X + 7)}" y="{r1(Y - 4)}" font-size="5" fill="#555">V1 furnace vent</text>'))
+    o.append(sym('m1', 'CD', 'Condensate: 3/4" PVC from FAU-1, 1/4"/ft, down wall 13 to the washer standpipe with an air gap; the auxiliary pan has a float switch that stops the unit', p.path(T.CONDENSATE, stroke='#2a9d8f', stroke_width='1.1', stroke_dasharray='3,2')))
     for gid, room, x, y, cfm, flex, frm in T.REGISTERS:
         X, Y = p.X(x), p.Y(y)
         body = p.path([frm, (x, y)], stroke=DUCT, stroke_width='1.1') + hit(X, Y) + f'<rect x="{r1(X - 7)}" y="{r1(Y - 5)}" width="14" height="10" fill="#fff" stroke="{DUCT}" stroke-width="1.2"/><path d="M{r1(X - 7)},{r1(Y - 5)}L{r1(X + 7)},{r1(Y + 5)}M{r1(X - 7)},{r1(Y + 5)}L{r1(X + 7)},{r1(Y - 5)}" stroke="{DUCT}" stroke-width="0.6"/>' + f'<text x="{r1(X)}" y="{r1(Y + 11)}" font-size="5.5" font-weight="700" fill="{DUCT}" text-anchor="middle">{gid} {cfm}</text>'
@@ -693,13 +707,15 @@ def m1():
         body = p.path(e['pts'], stroke='#8d8d8d', stroke_width='1.4') + hit(X, Y, 9) + f'<circle cx="{r1(X2)}" cy="{r1(Y2)}" r="3.5" fill="#8d8d8d"/>' + f'<text x="{r1(X2 + 5)}" y="{r1(Y2 - 5)}" font-size="5" fill="#6d6d6d">{e["id"]}</text>'
         o.append(sym('m1', e['id'], f'{e["id"]} {e["name"]}: {e["size"]} duct to a {e["cap"]}' + (f', {e["cfm"]} CFM' if e['cfm'] else ''), body))
     o.append(compass(p, 61.0, 47.5))
-    o.append(title_block(p, 'M-1', 'HVAC plan', 'Air handler AH-1 in the attic, heat pump HP-1, ducts, registers, exhaust', 'Schematic for pricing and coordination; equipment and duct sizes need a Manual J/S/D.', TB_Y(p)))
+    o.append(title_block(p, 'M-1', 'HVAC plan', 'Gas furnace FAU-1 in the attic, A/C AC-1, gas piping, ducts, registers, exhaust', 'Schematic for pricing and coordination; equipment and duct sizes need a Manual J/S/D.', TB_Y(p)))
     o.append('</svg>')
     svg = '\n'.join(o)
 
     eq = [
-        ('AH-1', ['AH-1', 'Air handler', 'attic over the back hall', '2.5 ton, 1,000 CFM, variable speed, 10 kW strips', T.AH['note']]),
-        ('HP-1', ['HP-1', 'Heat pump, outdoor', 'east side, by the mech room', '2.5 ton cold-climate (rated to -13°F or below)', T.HP['note']]),
+        ('FAU-1', ['FAU-1', 'Gas furnace, condensing, with A/C coil', 'attic over the back hall', '60,000 BTU/h input, 96% AFUE, two-stage; 1,000 CFM variable speed; 2.5-ton coil', T.AH['note']]),
+        ('AC-1', ['AC-1', 'Air conditioner, outdoor', 'east side, by the mech room', '2.5 ton, 15.2 SEER2 or better', T.HP['note']]),
+        ('GM', ['GM', 'Gas meter', 'garage east wall', 'by the utility', T.GAS_METER['note']]),
+        ('V1', ['V1', 'Furnace vent', 'rear roof slope', '2" PVC, concentric', T.FLUE['note']]),
         ('T1', ['T1', 'Thermostat', 'wall 5, living room', 'communicating, with outdoor sensor', T.TSTATS[0]['note']]),
     ]
     for e in T.EXHAUST:
@@ -718,21 +734,24 @@ def m1():
         ('RG', ['Filter return grilles 20x30 and 16x25', '2', 'MERV 8 filters']),
         ('JD', ['Jump ducts, 10" flex with 2 grilles each', str(len(T.JUMPS)), '']),
         ('EF', ['Bath fans 80 CFM with roof caps', '2', 'EF2 with a continuous-ventilation control']),
+        ('GAS', ['Gas piping: 3/4" black steel or CSST, 1/2" CSST', f'{math.ceil(sum(plen(g["pts"]) for g in T.GAS if len(g["pts"]) > 1) * 1.15)}\'', 'shutoffs, sediment traps, CSST bonding clamp and #6 Cu; pressure test 3 psi for 10 min (G2417)']),
+        ('PVC', ['2" PVC sch 40 intake and exhaust, concentric roof kit', '1 kit + 20\'', 'per the furnace manual']),
         ('MST', ['Mastic, UL 181 tape, duct straps', 'lot', 'every joint sealed; total leakage ≤ 4 CFM25 per 100 sq ft (IECC R403.3.5)']),
     ]
     below = ['<div class="below">',
-             '<section><h2>M-1 HVAC</h2>' + legend([(DUCT, 'supply trunks and flex, ceiling diffusers G#'), (RET, 'returns RG# and jump ducts J#'), ('#7a4fa0', 'refrigerant line set'), ('#2a9d8f', 'condensate'), ('#8d8d8d', 'exhaust ducts EF#')]) +
+             '<section><h2>M-1 HVAC</h2>' + legend([(DUCT, 'supply trunks and flex, ceiling diffusers G#'), (RET, 'returns RG# and jump ducts J#'), ('#7a4fa0', 'refrigerant line set'), ('#2a9d8f', 'condensate'), (GASC, 'natural gas'), ('#555', 'furnace vent V1'), ('#8d8d8d', 'exhaust ducts EF#')]) +
              notes([
-                 'The air handler AH-1 sits in the attic on a platform over the back hall, as the owner asked; the mechanical room is in the garage (water heater, panel, manifold). The way to AH-1 is the pull-down stair in the garage ceiling, with a catwalk and a 30" service space (M1305.1.3), a light switched at the access and a receptacle at the unit.',
+                 'The gas furnace FAU-1 sits in the attic on a platform over the back hall, as the owner asked; the mechanical room is in the garage (water heater, panel, manifold). The way to FAU-1 is the pull-down stair in the garage ceiling, with a catwalk and a 30" service space (M1305.1.3), a light switched at the access and a receptacle at the unit.',
                  'Every duct is in the attic: sheet-metal trunks with R-8 wrap, R-8 flex to ceiling diffusers, every joint sealed with mastic. Keep the flex runs short and straight, and pull them tight. Bury the ducts in the attic insulation where they cross the ceiling.',
                  'Airflow (1,000 CFM) is shared by room area and exposure for pricing; the HVAC contractor\'s Manual J (loads), S (equipment) and D (ducts) set the final numbers. Two filtered returns: RG1 under the unit and RG2 in the bedroom hall; the bedrooms return through jump ducts J1–J3.',
-                 'Heat: a cold-climate heat pump with 10 kW of electric strips in AH-1 for backup and defrost. Zone 6 assumed; confirm the design temperature.',
+                 'Heat: natural gas. FAU-1 is a sealed-combustion condensing furnace (direct vent), so it takes no combustion air from the attic; its 2" PVC intake and exhaust leave through the rear roof slope (V1). Cooling from AC-1 through the coil on the furnace. Zone 6 assumed; confirm the design temperature.',
+                 'Gas: the meter is on the garage east wall. The line runs up the inside of that wall into the mech room (main shutoff, capped tee for later), up into the attic and west to FAU-1, with a shutoff and sediment trap at the unit. Size it for the furnace plus the capped tee (about 160 CFH at 1/2 psi or less: 3/4" to the mech room). CSST is bonded to the electrode system; the gas fitter does the pressure test.',
                  'Ventilation: EF2 in the primary bath runs continuously at 50 CFM to meet IRC M1505.4 whole-house ventilation, boosting to 80 for showers. An ERV is the better choice in a tight cold-climate house (open item).',
                  'Range hood 300 CFM, ducted 6" to a roof cap; under 400 CFM, so no makeup air is required (M1503.6). Dryer vent rigid 4", 11\' developed length with two elbows, roof cap on the front slope.',
              ]) + '</section>',
              open_items([
-                 'Air handler in the attic: in a cold climate, the attic is the coldest place for ducts and the unit. Confirm, or move AH-1 into a conditioned closet (the back hall alcove fits a vertical unit).',
-                 'Heat source: heat pump with electric strips assumed. Gas furnace instead?',
+                 'Furnace in the attic: in a cold climate, the condensate lines need protection from freezing (route inside the insulation or add heat tape). Confirm, or move FAU-1 into a conditioned closet (the back hall alcove fits an upflow unit).',
+                 'Gas for the water heater, range and dryer too? They are drawn electric; the capped tee in the mech room is there if any of them switch.',
                  'Whole-house ventilation: continuous bath fan (drawn) or an ERV (about $2,500–$4,000 installed)?',
                  'Manual J/S/D from the HVAC contractor before ordering equipment; the 2.5-ton size is an estimate for 1,800 sq ft.',
              ]),
