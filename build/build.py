@@ -19,7 +19,7 @@ import trades as T        # noqa: E402
 import sheets as S        # noqa: E402
 from draw import Paper, base_layers, room_dims, esc, ft_in, wall_rect, openings_on, locate  # noqa: E402
 
-VERSION = 'v1'
+VERSION = 'v2'
 DATE = '2026-10-14'
 ROOT = os.path.dirname(HERE)
 PARTS = os.path.join(HERE, 'parts')
@@ -48,7 +48,8 @@ def set_data():
     plumbing = dict(fixtures=T.PFIX, drains=T.DRAINS, vents=T.VENTS, vtr=T.VTR, aav=T.AAV, trunks=T.TRUNKS, branches=T.BRANCHES,
                     manifold=T.MANIFOLD, service=T.SERVICE, cleanouts=T.CLEANOUTS)
     hvac = dict(ah=T.AH, sp=T.SUPPLY_PLENUM, rp=T.RETURN_PLENUM, trunks=T.DTRUNKS, registers=T.REGISTERS, returns=T.RETURNS, jumps=T.JUMPS,
-                tstats=T.TSTATS, exhaust=T.EXHAUST, hp=T.HP, lineset=T.LINESET, condensate=T.CONDENSATE)
+                tstats=T.TSTATS, exhaust=T.EXHAUST, hp=T.HP, lineset=T.LINESET, condensate=T.CONDENSATE,
+                gas=T.GAS, meter=T.GAS_METER, flues=T.FLUES)
     return dict(date=DATE, W=P.W, D=P.D, ceil=P.CEIL, pitch=P.PITCH, overhang=P.OVERHANG, tExt=P.T_EXT, tInt=P.T_INT,
                 walls=walls, rooms=rooms, fixtures=fixtures, outdoor=P.OUTDOOR, devices=devices, plumbing=plumbing, hvac=hvac,
                 base=dict(s=20))

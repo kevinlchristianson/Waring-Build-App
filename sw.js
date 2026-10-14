@@ -1,6 +1,6 @@
 // Bump VERSION whenever you change index.html so phones pick up the new copy,
 // and set the same value in index.html (meta app-version and the #appver label in the header).
-const VERSION = 'v1';
+const VERSION = 'v2';
 const CACHE = 'wb-' + VERSION;
 const SHELL = [
   './',

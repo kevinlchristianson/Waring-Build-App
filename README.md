@@ -8,7 +8,7 @@ A phone-friendly contractor app for the Waring Build house: 3 bed, 2 bath, 1,800
 | S-1 Framing | Walls, openings, headers, blocking, lumber, drywall and roof framing |
 | E-1 Electrical | 200A panel MP in the garage mech room, 29 circuits, every device, switch legs, one sheet per circuit |
 | P-1 Plumbing | Drains under the slab, venting, PEX home runs from a manifold in the mech room |
-| M-1 HVAC | Air handler AH-1 in the attic over the back hall, heat pump HP-1 outside the mech room, ducts and registers |
+| M-1 HVAC | Gas furnace FAU-1 in the attic over the back hall, A/C condenser AC-1 outside the mech room, gas piping from the meter, ducts and registers |
 | Chat | Crew chat and open items, shared with the Zero Rd Firebase project in its own room (`waring-crew`) |
 
 Each sheet links to a printable PDF packet in `packets/`.

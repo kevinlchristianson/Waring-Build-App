@@ -104,7 +104,7 @@ def base_layers(p, walls_colour=None, faint=False, fixtures=True, labels=True, d
     if outdoor:
         for name, x1, x2, y1, y2, note in P.OUTDOOR:
             o.append(p.rect(x1, x2, y1, y2, fill='#ece9e3', stroke='#b9b3a8', stroke_width='0.8'))
-        # heat pump pad and porch / patio posts
+        # AC pad and porch / patio posts
         o.append(p.rect(58.4, 61.6, 19.4, 22.6, fill='#e2ded6', stroke='#b9b3a8', stroke_width='0.6'))
     o.append(p.rect(0, P.W, 0, P.D, fill='#fff'))
     for r in P.ROOMS:

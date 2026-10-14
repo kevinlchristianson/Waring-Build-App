@@ -53,7 +53,7 @@ const MAT = {
   slab: mat(0xcfcac2), conc: mat(0xd9d5ce), grass: mat(0x9fb08a, { roughness: 1 }), post: mat(0x8a6a44, { roughness: 0.8 }), roof: mat(0x4a4d52, { roughness: 0.85 }), roofGhost: mat(0x4a4d52, { transparent: true, opacity: 0.35, depthWrite: false }),
   rec: mat(0xc8650a), sw: mat(0x8a5a00), light: mat(0xfff2c4, { emissive: 0xd9a400, emissiveIntensity: 0.35 }), alarm: mat(0xb4462f), panel: mat(0x333333), tall: mat(0xd6d1c8), data: mat(0x2c6aa0),
   drain: mat(0x3c3a36, { roughness: 0.5 }), vent: mat(0x4c8c4a, { roughness: 0.5 }), cold: mat(0x2c6aa0, { roughness: 0.4 }), hot: mat(0xc8382b, { roughness: 0.4 }),
-  sup: mat(0xe3a05a, { roughness: 0.6 }), ret: mat(0x7fa6c9, { roughness: 0.6 }), duct: mat(0xb0b0b0, { roughness: 0.5 }), unit: mat(0xe6e6e3, { roughness: 0.5 }), lineset: mat(0x7a4fa0), cond: mat(0x2a9d8f),
+  sup: mat(0xe3a05a, { roughness: 0.6 }), ret: mat(0x7fa6c9, { roughness: 0.6 }), duct: mat(0xb0b0b0, { roughness: 0.5 }), unit: mat(0xe6e6e3, { roughness: 0.5 }), lineset: mat(0x7a4fa0), cond: mat(0x2a9d8f), gas: mat(0xd9b100, { roughness: 0.4 }), flue: mat(0xf2f2ee, { roughness: 0.5 }),
   hi: mat(0xe08a00, { emissive: 0x4a2a00 }),
 };
 function setCut(h) { const on = h < 9.5; cutPlane.constant = h; for (const m of cutMats) { m.clippingPlanes = on ? [cutPlane] : null; m.needsUpdate = true; } }
@@ -103,7 +103,7 @@ function buildFloor() {
   const g = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), MAT.grass); g.rotation.x = -Math.PI / 2; g.position.y = -0.36; g.receiveShadow = true; G.floor.add(g);
   box(0, W, 0, D, -0.34, 0, MAT.slab, { kind: 'slab', text: 'Slab on grade: 4" concrete on 10-mil vapour retarder, R-10 perimeter insulation, thickened edges; the garage slab steps down 4" and slopes 1/8"/ft to the door' }, G.floor);
   for (const [name, x1, x2, y1, y2, note] of SET.outdoor) box(x1, x2, y1, y2, -0.34, -0.06, MAT.conc, { kind: 'slab', text: `${name}: ${note}` }, G.floor);
-  box(58.4, 61.6, 19.4, 22.6, -0.34, 0.1, MAT.conc, { kind: 'slab', text: 'HP-1 pad, raised above the snow line on a bracket or stand' }, G.floor);
+  box(58.4, 61.6, 19.4, 22.6, -0.34, 0.1, MAT.conc, { kind: 'slab', text: 'AC-1 pad: concrete or composite, level, 3" above grade' }, G.floor);
   const b64 = document.getElementById('base-svg').textContent.trim();
   const img = new Image();
   const plateMat = new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
@@ -423,7 +423,9 @@ function buildElectrical() {
 // ---------------------------------------------------------------- plumbing: drains under the slab, vents up the walls into the attic, PEX home runs
 const DRAIN_H = -1.0, COLD_H = -0.55, HOT_H = -0.7, ATTIC_H = PLATE + 0.6;
 const rOf = s => ({ '4"': 0.2, '3"': 0.15, '2"': 0.1, '1-1/2"': 0.08, '1-1/4"': 0.07 })[s] || 0.075;
-const roofAt = y => PLATE + 0.6 + SET.pitch * (D / 2 - Math.abs(y - D / 2));
+// underside of the roof sheathing over the wall line: truss bottom chord, heel and top chord depth
+const RB = PLATE + 3.5 / 12 + 0.6 + 5.5 / 12 * (0.5 + 0.5 * Math.hypot(1, SET.pitch));
+const roofAt = y => RB + SET.pitch * (D / 2 - Math.abs(y - D / 2));
 function buildPlumbing() {
   const pl = plumbing;
   for (const dr of pl.drains) polyline(dr.pts, DRAIN_H, rOf(dr.size), MAT.drain, { kind: 'plumb', text: `Drain ${dr.id}: ${dr.size} under the slab — ${dr.note}` }, G.plumb);
@@ -458,9 +460,9 @@ function buildPlumbing() {
 function buildHVAC() {
   const hv = hvac, TH = PLATE + 0.9;   // trunk centre height: on the ceiling joists, in the insulation
   const a = hv.ah; box(a.x1, a.x2, a.y1, a.y2, PLATE + 0.4, PLATE + 2.2, MAT.unit, { kind: 'hvac', text: a.note }, G.hvac);
-  box(a.x1 - 0.5, a.x2 + 1.5, a.y1 - 1.5, a.y2 + 0.4, PLATE + 0.3, PLATE + 0.36, MAT.wood, { kind: 'hvac', text: 'AH-1 service platform: 3/4" OSB on the truss bottom chords, 30" clear on the service side, catwalk from the pull-down stair in the garage' }, G.hvac);
-  const [sx1, sx2, sy1, sy2] = hv.sp; box(sx1, sx2, sy1, sy2, PLATE + 0.4, PLATE + 2.0, MAT.sup, { kind: 'hvac', text: 'Supply plenum on AH-1' }, G.hvac);
-  const [rx1, rx2, ry1, ry2] = hv.rp; box(rx1, rx2, ry1, ry2, PLATE + 0.4, PLATE + 2.0, MAT.ret, { kind: 'hvac', text: 'Return plenum and filter rack on AH-1' }, G.hvac);
+  box(a.x1 - 0.5, a.x2 + 1.5, a.y1 - 1.5, a.y2 + 0.4, PLATE + 0.3, PLATE + 0.36, MAT.wood, { kind: 'hvac', text: 'FAU-1 service platform: 3/4" OSB on the truss bottom chords, 30" clear on the service side, catwalk from the pull-down stair in the garage' }, G.hvac);
+  const [sx1, sx2, sy1, sy2] = hv.sp; box(sx1, sx2, sy1, sy2, PLATE + 0.4, PLATE + 2.0, MAT.sup, { kind: 'hvac', text: 'Supply plenum on FAU-1' }, G.hvac);
+  const [rx1, rx2, ry1, ry2] = hv.rp; box(rx1, rx2, ry1, ry2, PLATE + 0.4, PLATE + 2.0, MAT.ret, { kind: 'hvac', text: 'Return plenum and filter rack on FAU-1' }, G.hvac);
   const rect = (pts, w, hgt, h0, m, text) => { for (let i = 1; i < pts.length; i++) { const [ax, ay] = pts[i - 1], [bx, by] = pts[i]; const along = Math.abs(ay - by) < 1e-6; box(Math.min(ax, bx) - (along ? 0 : w / 2), Math.max(ax, bx) + (along ? 0 : w / 2), Math.min(ay, by) - (along ? w / 2 : 0), Math.max(ay, by) + (along ? w / 2 : 0), h0 - hgt / 2, h0 + hgt / 2, m, { kind: 'hvac', text }, G.hvac); } };
   for (const t of hv.trunks) rect(t.pts, parseInt(t.size) / 12, 8 / 12, TH, MAT.sup, `Supply trunk ${t.id} ${t.size} in the attic — ${t.note}`);
   for (const [id, room, x, y, cfm, flex, frm] of hv.registers) {
@@ -487,11 +489,26 @@ function buildHVAC() {
     polyline(e.pts, TH, r, MAT.duct, d, G.hvac);
     tube({ x: x1, y: y1, h: TH }, { x: x1, y: y1, h: roofAt(y1) + 0.5 }, r, MAT.duct, d, G.hvac);
   }
-  const ls = hv.lineset; tube({ x: ls[0][0], y: ls[0][1], h: 2.0 }, { x: ls[1][0], y: ls[1][1], h: 2.0 }, 0.08, MAT.lineset, { kind: 'hvac', text: 'Refrigerant line set HP-1 to AH-1' }, G.hvac);
-  tube({ x: ls[2][0], y: ls[2][1], h: 2.0 }, { x: ls[2][0], y: ls[2][1], h: TH }, 0.08, MAT.lineset, { kind: 'hvac', text: 'Refrigerant line set HP-1 to AH-1, up through the mech room ceiling' }, G.hvac);
-  polyline(ls.slice(2), TH, 0.08, MAT.lineset, { kind: 'hvac', text: 'Refrigerant line set HP-1 to AH-1, in the attic over the garage' }, G.hvac);
-  const cd = hv.condensate; polyline(cd, PLATE + 0.45, 0.05, MAT.cond, { kind: 'hvac', text: 'Condensate from AH-1: 3/4" PVC down wall 13 to the washer standpipe' }, G.hvac);
+  const ls = hv.lineset; tube({ x: ls[0][0], y: ls[0][1], h: 2.0 }, { x: ls[1][0], y: ls[1][1], h: 2.0 }, 0.08, MAT.lineset, { kind: 'hvac', text: 'Refrigerant line set AC-1 to FAU-1' }, G.hvac);
+  tube({ x: ls[2][0], y: ls[2][1], h: 2.0 }, { x: ls[2][0], y: ls[2][1], h: TH }, 0.08, MAT.lineset, { kind: 'hvac', text: 'Refrigerant line set AC-1 to FAU-1, up through the mech room ceiling' }, G.hvac);
+  polyline(ls.slice(2), TH, 0.08, MAT.lineset, { kind: 'hvac', text: 'Refrigerant line set AC-1 to FAU-1, in the attic over the garage' }, G.hvac);
+  const cd = hv.condensate; polyline(cd, PLATE + 0.45, 0.05, MAT.cond, { kind: 'hvac', text: 'Condensate from FAU-1: 3/4" PVC down wall 13 to the washer standpipe' }, G.hvac);
   tube({ x: cd[2][0], y: cd[2][1], h: PLATE + 0.45 }, { x: cd[2][0], y: cd[2][1], h: 3.3 }, 0.05, MAT.cond, { kind: 'hvac', text: 'Condensate drop in wall 13' }, G.hvac);
+  // natural gas: meter on the garage east wall, up the wall into the mech room, up into the attic and over to FAU-1
+  const gm = hv.meter; box(gm.x, gm.x + 0.9, gm.y - 0.6, gm.y + 0.6, 2.4, 4.0, MAT.gas, { kind: 'hvac', text: gm.note }, G.hvac);
+  const GH = 3.0, GA = PLATE + 0.6;
+  for (const g of hv.gas) {
+    const d = { kind: 'hvac', text: `Gas ${g.id}, ${g.size}: ${g.note}` }, r = parseInt(g.size) === 3 ? 0.07 : 0.05;
+    if (g.where === 'wall') { tube({ x: gm.x, y: gm.y, h: GH }, { x: g.pts[0][0], y: g.pts[0][1], h: GH }, r, MAT.gas, d, G.hvac); polyline(g.pts, GH, r, MAT.gas, d, G.hvac); }
+    else if (g.where === 'riser') { const [x, y] = g.pts[0]; tube({ x, y, h: GH }, { x, y, h: GA }, r, MAT.gas, d, G.hvac); box(x - 0.2, x + 0.2, y - 0.2, y + 0.2, GH - 0.6, GH, MAT.gas, { kind: 'hvac', text: 'Main gas shutoff, drip leg and capped tee in the mech room' }, G.hvac); }
+    else { const h = g.where === 'low' ? g.h : GA; polyline(g.pts, h, r, MAT.gas, d, G.hvac); const [x, y] = g.pts[g.pts.length - 1]; tube({ x, y, h }, { x, y, h: g.to ?? PLATE + 1.2 }, r, MAT.gas, d, G.hvac); }
+  }
+  for (const fl of hv.flues) {
+    const [fx0, fy0] = fl.pts[0], [fx1, fy1] = fl.pts[fl.pts.length - 1], fd = { kind: 'hvac', text: `${fl.id} ${fl.name}: ${fl.note}` }, h0 = fl.id === 'V1' ? PLATE + 1.6 : 5.6, hr = PLATE + 2.6 + 0.02 * Math.abs(fy1 - fy0);
+    tube({ x: fx0, y: fy0, h: h0 }, { x: fx0, y: fy0, h: PLATE + 2.6 }, 0.12, MAT.flue, fd, G.hvac);
+    if (fx1 !== fx0 || fy1 !== fy0) tube({ x: fx0, y: fy0, h: PLATE + 2.6 }, { x: fx1, y: fy1, h: hr }, 0.12, MAT.flue, fd, G.hvac);
+    tube({ x: fx1, y: fy1, h: hr }, { x: fx1, y: fy1, h: roofAt(fy1) + 1.6 }, 0.12, MAT.flue, fd, G.hvac);
+  }
 }
 
 // ---------------------------------------------------------------- roof: 6:12 common trusses at 24" o.c. spanning north–south, ridge east–west
@@ -502,7 +519,7 @@ function buildRoofTrusses() {
   for (let i = 0; i <= n; i++) {
     const px = i === 0 ? 0.0625 : i === n ? W - 0.0625 : i * 2, x = M(px, 0).x, parts = [];
     // a member from (s1, h1) to (s2, h2) in the truss plane (s north–south from the ridge, model z = -s)
-    const member = (s1, h1, s2, h2, d) => { const ds = s2 - s1, dh = h2 - h1; parts.push([TR.w, Math.hypot(ds, dh), d, x, (h1 + h2) / 2, -(s1 + s2) / 2, Math.atan2(ds, dh)]); };
+    const member = (s1, h1, s2, h2, d) => { const ds = s2 - s1, dh = h2 - h1; parts.push([TR.w, Math.hypot(ds, dh), d, x, (h1 + h2) / 2, -(s1 + s2) / 2, Math.atan2(-ds, dh)]); };
     member(-half, y0 - TR.bot / 2, half, y0 - TR.bot / 2, TR.bot);
     for (const s of [-1, 1]) {
       const es = s * (half + SET.overhang), eh = topAt(half) - SET.pitch * SET.overhang;
@@ -519,13 +536,13 @@ function buildRoofTrusses() {
 }
 function buildRoof() {
   // two roof planes, the gable triangles above walls 2 and 4, and shed covers over the porch and patio
-  const half = D / 2 + SET.overhang, run = Math.hypot(half, half * SET.pitch), eave = PLATE + TR.heel + 0.45 - SET.pitch * SET.overhang, ridge = PLATE + TR.heel + 0.45 + SET.pitch * D / 2;
+  const half = D / 2 + SET.overhang, run = Math.hypot(half, half * SET.pitch), eave = RB - SET.pitch * SET.overhang, ridge = RB + SET.pitch * D / 2;
   const data = { kind: 'roof', text: 'Roof: architectural asphalt shingles on 7/16" OSB, synthetic underlayment, ice barrier 24" inside the wall line, ridge vent; 6:12 simple gable, 12" overhangs' };
   for (const s of [-1, 1]) {
     const g = new THREE.BoxGeometry(W + 2 * SET.overhang, 0.08, run);
     const m = new THREE.Mesh(g, MAT.roof); m.rotation.x = s * Math.atan(SET.pitch); m.position.set(0, (eave + ridge) / 2 + 0.05, s * (half / 2)); m.castShadow = true; m.receiveShadow = true; m.userData = data; pickables.push(m); G.roof.add(m);
   }
-  const shape = new THREE.Shape(); shape.moveTo(-D / 2, 0); shape.lineTo(D / 2, 0); shape.lineTo(0, SET.pitch * D / 2); shape.closePath();
+  const k = RB - PLATE, shape = new THREE.Shape(); shape.moveTo(-D / 2, 0); shape.lineTo(D / 2, 0); shape.lineTo(D / 2, k); shape.lineTo(0, k + SET.pitch * D / 2); shape.lineTo(-D / 2, k); shape.closePath();
   for (const px of [0, W]) {
     const g = new THREE.ExtrudeGeometry(shape, { depth: TEXT, bevelEnabled: false }); g.rotateY(Math.PI / 2);
     const m = new THREE.Mesh(g, MAT.siding); m.position.set(px - W / 2 - (px ? TEXT : 0), PLATE, 0); m.userData = { kind: 'roof', text: `Gable end over the ${px ? 'east' : 'west'} wall: sheathed truss, siding to match` }; pickables.push(m); G.roof.add(m);
